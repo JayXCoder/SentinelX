@@ -14,6 +14,9 @@ env:
   QDRANT_URL: http://localhost:4633
   SGLANG_BASE_URL: http://localhost:4300
   SGLANG_MODEL: Qwen/Qwen3.5-2B
+  NEXT_PUBLIC_API_BASE_URL: http://localhost:4000
+  NEXT_PUBLIC_API_URL: http://localhost:4000
+  NEXT_PUBLIC_INTELLIGENCE_API_URL: http://localhost:4001
 
 jobs:
   backend-lint-test:
@@ -71,6 +74,31 @@ jobs:
       - name: Run tests
         run: pytest -q
 
+  frontend-build:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: sentinelx-frontend
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: npm
+          cache-dependency-path: sentinelx-frontend/package-lock.json
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Production build
+        run: npm run build
+        env:
+          NEXT_PUBLIC_API_BASE_URL: ${{ env.NEXT_PUBLIC_API_BASE_URL }}
+          NEXT_PUBLIC_API_URL: ${{ env.NEXT_PUBLIC_API_URL }}
+          NEXT_PUBLIC_INTELLIGENCE_API_URL: ${{ env.NEXT_PUBLIC_INTELLIGENCE_API_URL }}
+
   backend-docker:
     runs-on: ubuntu-latest
     steps:
@@ -79,21 +107,39 @@ jobs:
       - name: Build backend image
         run: docker build -t sentinelx-backend:ci ./sentinelx-backend
 
+  frontend-docker:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Build frontend image
+        run: |
+          docker build \
+            --build-arg NEXT_PUBLIC_API_BASE_URL=http://localhost:4000 \
+            --build-arg NEXT_PUBLIC_API_URL=http://localhost:4000 \
+            --build-arg NEXT_PUBLIC_INTELLIGENCE_API_URL=http://localhost:4001 \
+            -t sentinelx-frontend:ci \
+            ./sentinelx-frontend
+
   compose-config:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
 
-      - name: Validate docker compose
-        run: docker compose config
+      - name: Validate default stack compose file
+        run: docker compose config --quiet
 
-  frontend-scaffold:
+      - name: Validate optional AI profile
+        run: docker compose --profile ai config --quiet
+
+  stack-docker-build:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
 
-      - name: Verify frontend scaffold exists
-        run: test -f sentinelx-frontend/README.md
+      - name: Build default stack images (api + frontend)
+        run: |
+          docker compose build api frontend
 
   intelligence-scaffold:
     runs-on: ubuntu-latest
