@@ -1,1 +1,9 @@
-// Scaffold — see docs/sentinelx_task_raymond.md and docs/sentinelx_task_geng_xin.md
+import { DashboardShell } from './dashboard-shell';
+
+export function DashboardLayout({ children }: Readonly<{ children: React.ReactNode }>) {
+  return (
+    <div className="min-h-dvh bg-background text-foreground">
+      <DashboardShell>{children}</DashboardShell>
+    </div>
+  );
+}

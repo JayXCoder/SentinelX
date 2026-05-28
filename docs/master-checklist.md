@@ -129,55 +129,59 @@ Track MVP completion across the team. Specs: [sentinelx_master.md](sentinelx_mas
 
 **Owner:** Raymond · **Path:** `sentinelx-frontend/` · **Spec:** [sentinelx_task_raymond.md](sentinelx_task_raymond.md)
 
+> **2026-05-28:** `FrontendRef/` transferred into `sentinelx-frontend/` (Next.js 15 + Tailwind v4). Marketing landing (Handhold-inspired), light/dark theme, and dashboard wired to Jay's API at `GET /agents/signals` (port 4000). Mobile dashboard drawer + responsive grids added. Intelligence-service endpoints (correlation, dedicated risk scores, RAG, analytics) not live yet.
+
 ### Project setup
 
-- ☐ Next.js project created
-- ☐ TypeScript configured
-- ☐ Tailwind CSS v4 configured
-- ☐ Folder structure completed
-- ☐ Dockerfile created
-- ☐ Environment variables documented
+- ✅ Next.js project created
+- ✅ TypeScript configured
+- ✅ Tailwind CSS v4 configured
+- ✅ Folder structure completed
+- ✅ Dockerfile created
+- ✅ Environment variables documented (`.env.example`)
 
 ### Layout
 
-- ☐ Dashboard layout created
-- ☐ Sidebar created
-- ☐ Topbar created
-- ☐ Responsive layout completed
+- ✅ Dashboard layout created
+- ✅ Sidebar created
+- ✅ Topbar created
+- ✅ Responsive layout completed (mobile drawer sidebar, `min-w-0` overflow fixes, breakpoint grids)
 
 ### Pages
 
-- ☐ Executive Overview page completed
-- ☐ Threat Feed page completed
-- ☐ Competitor Intelligence page completed
-- ☐ Vendor Monitoring page completed
-- ☐ Alerts page completed
-- ☐ Intelligence Explorer page completed
+- ✅ Executive Overview page completed (`/dashboard`, redirect at `/dashboard/executive-overview`)
+- ✅ Threat Feed page completed
+- ✅ Competitor Intelligence page completed
+- ✅ Vendor Monitoring page completed
+- ✅ Alerts page completed
+- ✅ Intelligence Explorer page completed
+- ✅ Marketing landing page completed (`/` — not in original Raymond spec but shipped)
 
 ### API integration
 
-- ☐ API client completed
-- ☐ Dashboard overview API integrated
-- ☐ Signal APIs integrated
-- ☐ Risk score APIs integrated
-- ☐ Correlation APIs integrated
-- ☐ RAG API integrated
+- ✅ API client completed
+- ✅ Dashboard overview API integrated (aggregated from `/agents/signals`)
+- ✅ Signal APIs integrated (`/agents/signals?signal_type=…`)
+- ☐ Risk score APIs integrated (no `/risk-scores` service; vendor page uses signal-derived scores only)
+- ☐ Correlation APIs integrated (`/correlation/events` called but service absent; UI shows static placeholder events)
+- ☐ RAG API integrated (`askRagQuestion` wired; `/rag/ask` absent — UI shows error/empty state)
 
 ### Real-time
 
-- ☐ WebSocket or SSE client completed
-- ☐ New alert event handled
-- ☐ New signal event handled
-- ☐ New risk score event handled
-- ☐ Toast notification implemented
+- ✅ WebSocket client completed (`lib/websocket-client.ts`)
+- ✅ New alert event handled (Zustand store + toast)
+- ✅ New signal event handled
+- ✅ New risk score event handled
+- ✅ Toast notification implemented
+- ☐ Live backend WebSocket endpoint (no `/ws` on backend yet; client fails silently)
 
 ### UX states
 
-- ☐ Loading states completed
-- ☐ Error states completed
-- ☐ Empty states completed
-- ☐ Filters completed
-- ☐ Search completed
+- ✅ Loading states completed
+- ✅ Error states completed
+- ✅ Empty states completed
+- ☐ Filters completed (label-only panels on threat/competitor pages; `use-filters` store exists, not wired to UI)
+- ☐ Search completed (topbar button only, no search flow)
 - ☐ Pagination completed where required
 
 ---
@@ -186,40 +190,43 @@ Track MVP completion across the team. Specs: [sentinelx_master.md](sentinelx_mas
 
 **Owner:** Geng Xin · **Path:** `sentinelx-frontend/` · **Spec:** [sentinelx_task_geng_xin.md](sentinelx_task_geng_xin.md)
 
+> **2026-05-28:** Warm Handhold-inspired palette, DM Sans + Source Serif 4, light/dark via `ThemeProvider` + CSS variables. CTA system (`btn-cta` classes) for visible buttons. Marketing scroll animations (Framer Motion). Dashboard uses semantic tokens; charts/tables/modals still placeholders.
+
 ### Design system
 
-- ☐ Color palette completed
-- ☐ Typography system completed
-- ☐ Spacing system completed
-- ☐ Theme consistency completed
+- ✅ Color palette completed (`app/globals.css` — light/dark tokens)
+- ✅ Typography system completed (DM Sans body/logo, Source Serif display)
+- ✅ Spacing system completed (Tailwind v4 + section rhythm)
+- ✅ Theme consistency completed (light/dark toggle, shared tokens on landing + dashboard)
 
 ### Components
 
-- ☐ Metric cards completed
-- ☐ Risk score cards completed
-- ☐ Tables completed
-- ☐ Charts completed
+- ✅ Metric cards completed
+- ☐ Risk score cards completed (vendor rows show scores; no dedicated score-card component)
+- ☐ Tables completed (`TopEntitiesTable` is static mock data)
+- ☐ Charts completed (`RiskChart` is static bar placeholders)
 - ☐ Modals completed
-- ☐ Alert toasts completed
-- ☐ Loading components completed
+- ✅ Alert toasts completed
+- ✅ Loading components completed
+- ✅ CTA buttons completed (`btn-cta` / `CtaButton` — solid, warm, secondary, ghost)
 
 ### Real-time UI
 
-- ☐ Notification system completed
-- ☐ Live update animations completed
-- ☐ Realtime indicators completed
+- ✅ Notification system completed
+- ✅ Live update animations completed (marketing: fade-in, stagger, floating demo; not live data-driven dashboard animations)
+- ☐ Realtime indicators completed (dashboard “Realtime” / “When WS available” copy is static, not connection state)
 
 ### Responsive
 
-- ☐ Desktop layout completed
-- ☐ Tablet layout completed
-- ☐ Mobile layout completed
+- ✅ Desktop layout completed
+- ✅ Tablet layout completed (responsive grids on landing + dashboard)
+- ✅ Mobile layout completed (marketing header; dashboard hamburger + slide-out nav)
 
 ### Accessibility
 
-- ☐ Keyboard navigation completed
-- ☐ Focus states completed
-- ☐ Color contrast verified
+- ☐ Keyboard navigation completed (partial: FAQ `<details>`, focus on CTAs only)
+- ☐ Focus states completed (`focus-visible` on `btn-cta` only; not audited app-wide)
+- ☐ Color contrast verified (not formally tested)
 
 ### Documentation
 
@@ -231,6 +238,7 @@ Track MVP completion across the team. Specs: [sentinelx_master.md](sentinelx_mas
 
 ## Platform — Docker & CI/CD
 
-- ✅ Root `docker-compose.yml` (postgres, redis, qdrant, api, celery, sglang profile)
-- ✅ GitHub Actions CI (lint, test, docker build, compose validate)
-- ✅ SGLang service configured for `Qwen/Qwen3.5-2B`
+- ✅ Root `docker-compose.yml` — full stack in one command (`api`, `frontend`, postgres, redis, qdrant, celery; port 4002)
+- ✅ GitHub Actions CI — backend lint/test/docker; frontend `npm run build` + Docker; `docker compose build api frontend`
+- ✅ SGLang service configured for `Qwen/Qwen3.5-2B` (`--profile ai`)
+- ✅ Intelligence scaffold on `--profile intelligence` (port 4001 when implemented)
