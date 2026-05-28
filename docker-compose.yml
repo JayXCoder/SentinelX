@@ -138,20 +138,72 @@ services:
       redis:
         condition: service_healthy
 
-  # Kai Zhe — intelligence layer (scaffold)
+  # Kai Zhe — intelligence layer
   intelligence_api:
-    profiles: ["intelligence"]
+    profiles: ["intelligence", "full"]
     networks:
       - sentinelx
     build:
       context: ./sentinelx-intelligence
       dockerfile: Dockerfile
     ports:
-      - "4001:4000"
+      - "4001:4001"
+    environment:
+      DATABASE_URL: postgresql+psycopg2://sentinelx:sentinelx@postgres:5432/sentinelx
+      REDIS_URL: redis://redis:6379/0
+      CELERY_BROKER_URL: redis://redis:6379/0
+      CELERY_RESULT_BACKEND: redis://redis:6379/1
+      QDRANT_URL: http://qdrant:6333
+      SGLANG_BASE_URL: http://sglang_qwen:30000
+      SGLANG_MODEL: Qwen/Qwen3.5-2B
     depends_on:
-      - postgres
-      - redis
-      - qdrant
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      qdrant:
+        condition: service_started
+
+  intel_celery_worker:
+    profiles: ["intelligence", "full"]
+    networks:
+      - sentinelx
+    build:
+      context: ./sentinelx-intelligence
+      dockerfile: Dockerfile
+    entrypoint: ["celery", "-A", "app.workers.celery_app.celery_app", "worker", "--loglevel=info"]
+    environment:
+      DATABASE_URL: postgresql+psycopg2://sentinelx:sentinelx@postgres:5432/sentinelx
+      REDIS_URL: redis://redis:6379/0
+      CELERY_BROKER_URL: redis://redis:6379/0
+      CELERY_RESULT_BACKEND: redis://redis:6379/1
+      QDRANT_URL: http://qdrant:6333
+      SGLANG_BASE_URL: http://sglang_qwen:30000
+      SGLANG_MODEL: Qwen/Qwen3.5-2B
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      qdrant:
+        condition: service_started
+
+  intel_celery_beat:
+    profiles: ["intelligence", "full"]
+    networks:
+      - sentinelx
+    build:
+      context: ./sentinelx-intelligence
+      dockerfile: Dockerfile
+    entrypoint: ["celery", "-A", "app.workers.celery_app.celery_app", "beat", "--loglevel=info"]
+    environment:
+      DATABASE_URL: postgresql+psycopg2://sentinelx:sentinelx@postgres:5432/sentinelx
+      REDIS_URL: redis://redis:6379/0
+      CELERY_BROKER_URL: redis://redis:6379/0
+      CELERY_RESULT_BACKEND: redis://redis:6379/1
+    depends_on:
+      redis:
+        condition: service_healthy
 
   # Raymond + Geng Xin — frontend (scaffold)
   frontend:

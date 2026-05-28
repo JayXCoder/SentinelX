@@ -72,56 +72,56 @@ Track MVP completion across the team. Specs: [sentinelx_master.md](sentinelx_mas
 
 ### Correlation
 
-- ☐ Consume cyber signals
-- ☐ Consume GTM signals
-- ☐ Consume financial signals
-- ☐ Consume vendor risk signals
-- ☐ Consume OSINT signals
-- ☐ Create correlated events
-- ☐ Store correlated events
-- ☐ Publish correlated event stream
+- ✅ Consume cyber signals
+- ✅ Consume GTM signals
+- ✅ Consume financial signals
+- ✅ Consume vendor risk signals
+- ✅ Consume OSINT signals
+- ✅ Create correlated events
+- ✅ Store correlated events
+- ✅ Publish correlated event stream
 
 ### Risk scoring
 
-- ☐ Cyber exposure scoring complete
-- ☐ Vendor risk scoring complete
-- ☐ GTM opportunity scoring complete
-- ☐ Market threat scoring complete
-- ☐ Reputation scoring complete
-- ☐ Risk level mapping complete
-- ☐ Explanation generation complete
+- ✅ Cyber exposure scoring complete
+- ✅ Vendor risk scoring complete
+- ✅ GTM opportunity scoring complete
+- ✅ Market threat scoring complete
+- ✅ Reputation scoring complete
+- ✅ Risk level mapping complete
+- ✅ Explanation generation complete
 
 ### Knowledge graph
 
-- ☐ Entity model complete
-- ☐ Relationship model complete
-- ☐ Entity upsert logic complete
-- ☐ Relationship creation logic complete
-- ☐ Entity timeline endpoint complete
+- ✅ Entity model complete
+- ✅ Relationship model complete
+- ✅ Entity upsert logic complete
+- ✅ Relationship creation logic complete
+- ✅ Entity timeline endpoint complete
 
 ### RAG memory
 
-- ☐ Qdrant collections created
-- ☐ Signal memory stored
-- ☐ Event memory stored
-- ☐ Risk explanation memory stored
-- ☐ RAG query endpoint complete
-- ☐ Qwen answer generation complete
+- ✅ Qdrant collections created
+- ✅ Signal memory stored
+- ✅ Event memory stored
+- ✅ Risk explanation memory stored
+- ✅ RAG query endpoint complete
+- ✅ Qwen answer generation complete
 
 ### API
 
-- ☐ Correlation endpoints complete
-- ☐ Risk score endpoints complete
-- ☐ Graph endpoints complete
-- ☐ RAG endpoints complete
-- ☐ Analytics endpoints complete
+- ✅ Correlation endpoints complete
+- ✅ Risk score endpoints complete
+- ✅ Graph endpoints complete
+- ✅ RAG endpoints complete
+- ✅ Analytics endpoints complete
 
 ### Docker
 
-- ☐ Dockerfile complete
-- ☐ docker-compose service configured
-- ☐ Environment variables documented
-- ☐ Service starts successfully
+- ✅ Dockerfile complete
+- ✅ docker-compose service configured
+- ✅ Environment variables documented
+- ✅ Service starts successfully
 
 ---
 

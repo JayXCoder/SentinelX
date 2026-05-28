@@ -1,1 +1,5 @@
-# Scaffold — implement per docs/sentinelx_task_kai_zhe.md
+from sqlalchemy.orm import DeclarativeBase
+
+
+class Base(DeclarativeBase):
+    pass
