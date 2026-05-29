@@ -6,9 +6,25 @@ Correlation engine, risk scoring, knowledge graph, and RAG memory.
 
 Consumes intelligence signals from Jay's backend (via Redis streams), correlates related signals into higher-level events, calculates explainable risk scores, stores entities and relationships in a knowledge graph, and answers questions via RAG (Qdrant + Qwen).
 
+## Documentation (required)
+
+**Every module and endpoint must be documented** before merge.
+
+| Doc | Contents |
+|-----|----------|
+| [docs/README.md](docs/README.md) | Index and standards |
+| [docs/architecture.md](docs/architecture.md) | Target system design (Mermaid) |
+| [docs/api-reference.md](docs/api-reference.md) | REST catalog (mark ✅ when live) |
+| [docs/workflow.md](docs/workflow.md) | Correlation, scoring, RAG flows |
+| [docs/integration.md](docs/integration.md) | Contract with Jay's signal export |
+
+Task spec: [../docs/sentinelx_task_kai_zhe.md](../docs/sentinelx_task_kai_zhe.md)
+
+**Rule:** Implement API → update `docs/api-reference.md` + flip status from ☐ to ✅.
+
 ## Port
 
-- API: `4001`
+- API: `4001` (host port when run via root `docker compose`)
 
 ## Service Stack
 
@@ -53,7 +69,7 @@ Consumes intelligence signals from Jay's backend (via Redis streams), correlates
 docker compose up postgres redis qdrant -d
 
 # Start intelligence API + workers
-docker compose --profile intelligence up -d
+docker compose --profile intelligence up -d --build
 ```
 
 ## API Endpoints
@@ -88,6 +104,8 @@ celery -A app.workers.celery_app.celery_app beat --loglevel=info
 | `QDRANT_URL` | `http://qdrant:6333` | Qdrant vector DB |
 | `SGLANG_BASE_URL` | `http://sglang_qwen:30000` | SGLang/Qwen endpoint |
 | `SGLANG_MODEL` | `Qwen/Qwen3.5-2B` | Model name |
+
+See root [`.env.example`](../.env.example) for the full list (stream settings, correlation windows, consumer group, etc.).
 
 ## Database Migrations
 
