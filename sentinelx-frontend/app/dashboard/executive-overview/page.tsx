@@ -1,1 +1,5 @@
-// Scaffold — see docs/sentinelx_task_raymond.md and docs/sentinelx_task_geng_xin.md
+import { redirect } from 'next/navigation';
+
+export default function ExecutiveOverviewPage() {
+  redirect('/dashboard');
+}

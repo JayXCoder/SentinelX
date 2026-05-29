@@ -99,7 +99,7 @@ services:
   sglang_qwen:
     image: lmsysorg/sglang:latest
     restart: unless-stopped
-    profiles: ["ai", "full"]
+    profiles: ["ai"]
     networks:
       - sentinelx
     environment:
@@ -188,7 +188,7 @@ services:
     networks:
       - sentinelx
     build:
-      context: ./sentinelx-intelligence
+      context: ./sentinelx-frontend
       dockerfile: Dockerfile
     restart: unless-stopped
     ports:
@@ -254,7 +254,7 @@ services:
     networks:
       - sentinelx
     build:
-      context: ./sentinelx-frontend
+      context: ./sentinelx-intelligence
       dockerfile: Dockerfile
       args:
         <<: *frontend-build-args
