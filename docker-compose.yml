@@ -2,7 +2,9 @@
 #   docker compose up -d --build
 # Optional profiles:
 #   --profile ai            SGLang / Qwen (requires NVIDIA GPU)
-#   --profile intelligence  Kai Zhe intelligence API (when implemented)
+#   --profile intelligence  Intelligence API + Celery workers
+#   --profile frontend      Next.js dashboard
+#   --profile full          ai + intelligence + frontend
 
 name: sentinelx
 
@@ -11,18 +13,39 @@ networks:
     driver: bridge
 
 x-backend-env: &backend-env
-  DATABASE_URL: postgresql+psycopg2://sentinelx:sentinelx@postgres:5432/sentinelx
-  REDIS_URL: redis://redis:6379/0
-  CELERY_BROKER_URL: redis://redis:6379/0
-  CELERY_RESULT_BACKEND: redis://redis:6379/1
-  QDRANT_URL: http://qdrant:6333
-  SGLANG_BASE_URL: http://sglang_qwen:30000
-  SGLANG_MODEL: Qwen/Qwen3.5-2B
+  DATABASE_URL: ${DATABASE_URL:-postgresql+psycopg2://sentinelx:sentinelx@postgres:5432/sentinelx}
+  REDIS_URL: ${REDIS_URL:-redis://redis:6379/0}
+  CELERY_BROKER_URL: ${CELERY_BROKER_URL:-redis://redis:6379/0}
+  CELERY_RESULT_BACKEND: ${CELERY_RESULT_BACKEND:-redis://redis:6379/1}
+  QDRANT_URL: ${QDRANT_URL:-http://qdrant:6333}
+  QDRANT_API_KEY: ${QDRANT_API_KEY:-}
+  SGLANG_BASE_URL: ${SGLANG_BASE_URL:-http://sglang_qwen:30000}
+  SGLANG_MODEL: ${SGLANG_MODEL:-Qwen/Qwen3.5-2B}
   BRIGHT_DATA_ENABLED: ${BRIGHT_DATA_ENABLED:-false}
   BRIGHT_DATA_USERNAME: ${BRIGHT_DATA_USERNAME:-}
   BRIGHT_DATA_PASSWORD: ${BRIGHT_DATA_PASSWORD:-}
   HF_TOKEN: ${HF_TOKEN:-}
   HUGGING_FACE_HUB_TOKEN: ${HF_TOKEN:-}
+
+x-intel-env: &intel-env
+  DATABASE_URL: ${DATABASE_URL:-postgresql+psycopg2://sentinelx:sentinelx@postgres:5432/sentinelx}
+  REDIS_URL: ${REDIS_URL:-redis://redis:6379/0}
+  CELERY_BROKER_URL: ${CELERY_BROKER_URL:-redis://redis:6379/0}
+  CELERY_RESULT_BACKEND: ${CELERY_RESULT_BACKEND:-redis://redis:6379/1}
+  QDRANT_URL: ${QDRANT_URL:-http://qdrant:6333}
+  QDRANT_API_KEY: ${QDRANT_API_KEY:-}
+  SGLANG_BASE_URL: ${SGLANG_BASE_URL:-http://sglang_qwen:30000}
+  SGLANG_MODEL: ${SGLANG_MODEL:-Qwen/Qwen3.5-2B}
+  SGLANG_TIMEOUT_SECONDS: ${SGLANG_TIMEOUT_SECONDS:-120.0}
+  SGLANG_MAX_RETRIES: ${SGLANG_MAX_RETRIES:-3}
+  SENTINELX_DEBUG: ${SENTINELX_DEBUG:-false}
+  CORS_ORIGINS: ${CORS_ORIGINS:-*}
+  STREAM_MAX_LEN: ${STREAM_MAX_LEN:-10000}
+  STREAM_BLOCK_MS: ${STREAM_BLOCK_MS:-5000}
+  CONSUMER_GROUP: ${CONSUMER_GROUP:-intelligence_layer}
+  CONSUMER_NAME: ${CONSUMER_NAME:-intel_worker_1}
+  CORRELATION_TIME_WINDOW_HOURS: ${CORRELATION_TIME_WINDOW_HOURS:-72}
+  CORRELATION_MIN_SIGNALS: ${CORRELATION_MIN_SIGNALS:-2}
 
 x-frontend-build-args: &frontend-build-args
   NEXT_PUBLIC_API_BASE_URL: ${NEXT_PUBLIC_API_BASE_URL:-http://localhost:4000}
@@ -37,15 +60,15 @@ services:
     networks:
       - sentinelx
     environment:
-      POSTGRES_USER: sentinelx
-      POSTGRES_PASSWORD: sentinelx
-      POSTGRES_DB: sentinelx
+      POSTGRES_USER: ${POSTGRES_USER:-sentinelx}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-sentinelx}
+      POSTGRES_DB: ${POSTGRES_DB:-sentinelx}
     volumes:
       - postgres_data:/var/lib/postgresql/data
     ports:
-      - "4543:5432"
+      - "${POSTGRES_PORT:-4543}:5432"
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U sentinelx -d sentinelx"]
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-sentinelx} -d ${POSTGRES_DB:-sentinelx}"]
       interval: 5s
       timeout: 5s
       retries: 10
@@ -56,7 +79,7 @@ services:
     networks:
       - sentinelx
     ports:
-      - "4637:6379"
+      - "${REDIS_PORT:-4637}:6379"
     healthcheck:
       test: ["CMD", "redis-cli", "ping"]
       interval: 5s
@@ -69,7 +92,7 @@ services:
     networks:
       - sentinelx
     ports:
-      - "4633:6333"
+      - "${QDRANT_PORT:-4633}:6333"
     volumes:
       - qdrant_data:/qdrant/storage
 
@@ -84,11 +107,11 @@ services:
       HUGGING_FACE_HUB_TOKEN: ${HF_TOKEN:-}
     command: >
       python3 -m sglang.launch_server
-      --model-path Qwen/Qwen3.5-2B
+      --model-path ${SGLANG_MODEL:-Qwen/Qwen3.5-2B}
       --host 0.0.0.0
       --port 30000
     ports:
-      - "4300:30000"
+      - "${SGLANG_PORT:-4300}:30000"
     volumes:
       - sglang_cache:/root/.cache
     deploy:
@@ -109,7 +132,7 @@ services:
     environment:
       <<: *backend-env
     ports:
-      - "4000:4000"
+      - "${BACKEND_PORT:-4000}:4000"
     depends_on:
       postgres:
         condition: service_healthy
@@ -160,17 +183,84 @@ services:
       api:
         condition: service_healthy
 
-  frontend:
+  intelligence_api:
+    profiles: ["intelligence", "full"]
+    networks:
+      - sentinelx
     build:
       context: ./sentinelx-frontend
+      dockerfile: Dockerfile
+    restart: unless-stopped
+    ports:
+      - "${INTEL_PORT:-4001}:4001"
+    environment:
+      <<: *intel-env
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      qdrant:
+        condition: service_started
+      api:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "python -c \"import urllib.request; urllib.request.urlopen('http://127.0.0.1:4001/health')\""]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 30s
+
+  intel_celery_worker:
+    profiles: ["intelligence", "full"]
+    networks:
+      - sentinelx
+    build:
+      context: ./sentinelx-intelligence
+      dockerfile: Dockerfile
+    restart: unless-stopped
+    entrypoint: ["celery", "-A", "app.workers.celery_app.celery_app", "worker", "--loglevel=info"]
+    environment:
+      <<: *intel-env
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      qdrant:
+        condition: service_started
+      intelligence_api:
+        condition: service_healthy
+
+  intel_celery_beat:
+    profiles: ["intelligence", "full"]
+    networks:
+      - sentinelx
+    build:
+      context: ./sentinelx-intelligence
+      dockerfile: Dockerfile
+    restart: unless-stopped
+    entrypoint: ["celery", "-A", "app.workers.celery_app.celery_app", "beat", "--loglevel=info"]
+    environment:
+      <<: *intel-env
+    depends_on:
+      redis:
+        condition: service_healthy
+      intelligence_api:
+        condition: service_healthy
+
+  frontend:
+    profiles: ["frontend", "full"]
+    networks:
+      - sentinelx
+    build:
+      context: ./sentinelx-intelligence
       dockerfile: Dockerfile
       args:
         <<: *frontend-build-args
     restart: unless-stopped
-    networks:
-      - sentinelx
     ports:
-      - "4002:3000"
+      - "${FRONTEND_PORT:-4002}:3000"
     environment:
       <<: *frontend-build-args
     depends_on:
@@ -188,26 +278,6 @@ services:
       timeout: 5s
       retries: 5
       start_period: 40s
-
-  # Kai Zhe — intelligence layer (scaffold; enable when Dockerfile is implemented)
-  intelligence_api:
-    profiles: ["intelligence"]
-    networks:
-      - sentinelx
-    build:
-      context: ./sentinelx-intelligence
-      dockerfile: Dockerfile
-    ports:
-      - "4001:4000"
-    depends_on:
-      postgres:
-        condition: service_healthy
-      redis:
-        condition: service_healthy
-      qdrant:
-        condition: service_started
-      api:
-        condition: service_healthy
 
 volumes:
   postgres_data:
