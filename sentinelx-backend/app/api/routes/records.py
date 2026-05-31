@@ -1,18 +1,21 @@
 from uuid import UUID
 
-from fastapi import APIRouter, Depends, HTTPException
-from sqlalchemy.orm import Session
-
+from app.core.pagination import DEFAULT_PAGE_LIMIT, LimitQuery
 from app.db.models.parsed_record import ParsedRecord
 from app.db.models.raw_record import RawRecord
 from app.db.session import get_db
 from app.schemas.record import ParsedRecordRead, RawRecordRead
+from fastapi import APIRouter, Depends, HTTPException
+from sqlalchemy.orm import Session
 
 router = APIRouter(prefix="/records", tags=["records"])
 
 
 @router.get("/raw", response_model=list[RawRecordRead])
-def list_raw_records(db: Session = Depends(get_db), limit: int = 50) -> list[RawRecord]:
+def list_raw_records(
+    db: Session = Depends(get_db),
+    limit: LimitQuery = DEFAULT_PAGE_LIMIT,
+) -> list[RawRecord]:
     return db.query(RawRecord).order_by(RawRecord.fetched_at.desc()).limit(limit).all()
 
 
@@ -27,7 +30,7 @@ def get_raw_record(record_id: UUID, db: Session = Depends(get_db)) -> RawRecord:
 @router.get("/parsed", response_model=list[ParsedRecordRead])
 def list_parsed_records(
     db: Session = Depends(get_db),
-    limit: int = 50,
+    limit: LimitQuery = DEFAULT_PAGE_LIMIT,
 ) -> list[ParsedRecord]:
     return (
         db.query(ParsedRecord)

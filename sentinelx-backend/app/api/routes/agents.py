@@ -1,9 +1,8 @@
 from uuid import UUID
 
-from fastapi import APIRouter, Depends, HTTPException
-from sqlalchemy.orm import Session, joinedload
-
 from app.agents import DEFAULT_AGENTS
+from app.core.pagination import DEFAULT_PAGE_LIMIT, LimitQuery
+from app.core.security import verify_api_key
 from app.db.models.intelligence_signal import IntelligenceSignal
 from app.db.models.parsed_record import ParsedRecord
 from app.db.models.raw_record import RawRecord
@@ -13,8 +12,12 @@ from app.schemas.signal import (
     KaiZheSignalExport,
     ProcessBatchRequest,
 )
+from app.schemas.signal_detail import SignalDetailResponse
 from app.services.agent_processing_service import AgentProcessingService
+from app.services.signal_detail_service import SignalDetailService
 from app.workers.ai_worker import process_parsed_record_task
+from fastapi import APIRouter, Depends, HTTPException
+from sqlalchemy.orm import Session, joinedload
 
 router = APIRouter(prefix="/agents", tags=["agents"])
 
@@ -25,6 +28,7 @@ def process_parsed_record(
     agents: list[str] | None = None,
     async_mode: bool = False,
     db: Session = Depends(get_db),
+    _: None = Depends(verify_api_key),
 ):
     parsed = db.get(ParsedRecord, parsed_record_id)
     if not parsed:
@@ -39,7 +43,11 @@ def process_parsed_record(
 
 
 @router.post("/process-batch")
-def process_batch(payload: ProcessBatchRequest, async_mode: bool = True) -> dict:
+def process_batch(
+    payload: ProcessBatchRequest,
+    async_mode: bool = True,
+    _: None = Depends(verify_api_key),
+) -> dict:
     for record_id in payload.parsed_record_ids:
         process_parsed_record_task.delay(
             str(record_id),
@@ -60,12 +68,20 @@ def agent_status() -> dict:
 def list_signals(
     db: Session = Depends(get_db),
     signal_type: str | None = None,
-    limit: int = 50,
+    limit: LimitQuery = DEFAULT_PAGE_LIMIT,
 ) -> list[IntelligenceSignal]:
     query = db.query(IntelligenceSignal)
     if signal_type:
         query = query.filter(IntelligenceSignal.signal_type == signal_type)
     return query.order_by(IntelligenceSignal.created_at.desc()).limit(limit).all()
+
+
+@router.get("/signals/{signal_id}/detail", response_model=SignalDetailResponse)
+def get_signal_detail(signal_id: UUID, db: Session = Depends(get_db)) -> SignalDetailResponse:
+    detail = SignalDetailService(db).get_detail(signal_id)
+    if not detail:
+        raise HTTPException(status_code=404, detail="Signal not found")
+    return detail
 
 
 @router.get("/signals/{signal_id}", response_model=IntelligenceSignalRead)

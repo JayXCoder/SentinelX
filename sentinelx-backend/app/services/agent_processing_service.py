@@ -1,7 +1,5 @@
 from uuid import UUID
 
-from sqlalchemy.orm import Session, joinedload
-
 from app.agents import AGENT_REGISTRY, DEFAULT_AGENTS
 from app.db.models.intelligence_signal import IntelligenceSignal
 from app.db.models.parsed_record import ParsedRecord
@@ -11,6 +9,7 @@ from app.schemas.signal import AgentInput, KaiZheSignalExport
 from app.services.embedding_service import EmbeddingService
 from app.services.redis_stream_service import SIGNAL_STREAM_BY_TYPE, get_redis_stream_service
 from app.services.sglang_service import SGLangService
+from sqlalchemy.orm import Session, joinedload
 
 
 class AgentProcessingService:

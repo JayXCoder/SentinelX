@@ -10,11 +10,15 @@ export type NotificationItem = {
   tone: 'info' | 'success' | 'warning' | 'critical';
 };
 
+export type RealtimeStatus = 'connected' | 'polling' | 'offline';
+
 export type DashboardState = {
   selectedEntity: string | null;
   selectedRiskLevel: 'all' | 'low' | 'medium' | 'high' | 'critical';
   selectedTimeRange: TimeRange;
+  searchQuery: string;
   sidebarOpen: boolean;
+  realtimeStatus: RealtimeStatus;
   liveSignals: IntelligenceSignal[];
   liveEvents: CorrelatedEvent[];
   liveRiskScores: RiskScore[];
@@ -22,7 +26,9 @@ export type DashboardState = {
   setSelectedEntity: (entity: string | null) => void;
   setSelectedRiskLevel: (level: DashboardState['selectedRiskLevel']) => void;
   setSelectedTimeRange: (range: TimeRange) => void;
+  setSearchQuery: (query: string) => void;
   setSidebarOpen: (open: boolean) => void;
+  setRealtimeStatus: (status: RealtimeStatus) => void;
   pushNotification: (notification: NotificationItem) => void;
   addLiveSignal: (signal: IntelligenceSignal) => void;
   addLiveEvent: (event: CorrelatedEvent) => void;
@@ -34,7 +40,9 @@ export const useDashboardStore = create<DashboardState>((set) => ({
   selectedEntity: null,
   selectedRiskLevel: 'all',
   selectedTimeRange: '7d',
+  searchQuery: '',
   sidebarOpen: false,
+  realtimeStatus: 'offline',
   liveSignals: [],
   liveEvents: [],
   liveRiskScores: [],
@@ -42,7 +50,9 @@ export const useDashboardStore = create<DashboardState>((set) => ({
   setSelectedEntity: (selectedEntity) => set({ selectedEntity }),
   setSelectedRiskLevel: (selectedRiskLevel) => set({ selectedRiskLevel }),
   setSelectedTimeRange: (selectedTimeRange) => set({ selectedTimeRange }),
+  setSearchQuery: (searchQuery) => set({ searchQuery }),
   setSidebarOpen: (sidebarOpen) => set({ sidebarOpen }),
+  setRealtimeStatus: (realtimeStatus) => set({ realtimeStatus }),
   pushNotification: (notification) => set((state) => ({ notifications: [notification, ...state.notifications].slice(0, 5) })),
   addLiveSignal: (signal) => set((state) => ({ liveSignals: [signal, ...state.liveSignals].slice(0, 10) })),
   addLiveEvent: (event) => set((state) => ({ liveEvents: [event, ...state.liveEvents].slice(0, 10) })),

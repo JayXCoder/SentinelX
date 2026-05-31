@@ -15,6 +15,9 @@ class Settings(BaseSettings):
     debug: bool = Field(default=False, validation_alias="SENTINELX_DEBUG")
     api_prefix: str = ""
     cors_origins: str = "*"
+    # Optional shared secret; when set, mutating routes require X-API-Key header.
+    api_key: str | None = Field(default=None, validation_alias="API_KEY")
+    rate_limit_per_minute: int = Field(default=60, validation_alias="RATE_LIMIT_PER_MINUTE")
 
     database_url: str = (
         "postgresql+psycopg2://sentinelx:sentinelx@postgres:5432/sentinelx"
@@ -31,11 +34,16 @@ class Settings(BaseSettings):
     sglang_timeout_seconds: float = 120.0
     sglang_max_retries: int = 3
 
+    bright_data_enabled: bool = False
+    # Web Unlocker API (recommended) — POST https://api.brightdata.com/request
+    bright_data_api_key: str | None = None
+    bright_data_zone: str | None = None
+    bright_data_api_url: str = "https://api.brightdata.com/request"
+    # Legacy native proxy — brd.superproxy.io (optional alternative)
     bright_data_username: str | None = None
     bright_data_password: str | None = None
     bright_data_host: str = "brd.superproxy.io"
-    bright_data_port: int = 22225
-    bright_data_enabled: bool = False
+    bright_data_port: int = 33335
 
     scrape_max_retries: int = 3
     scrape_timeout_seconds: float = 60.0

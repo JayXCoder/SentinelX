@@ -1,12 +1,11 @@
 from typing import Any
 from uuid import UUID
 
-from qdrant_client import QdrantClient
-from qdrant_client.http import models as qmodels
-from fastembed import TextEmbedding
-
 from app.core.config import get_settings
 from app.core.logging import get_logger
+from fastembed import TextEmbedding
+from qdrant_client import QdrantClient
+from qdrant_client.http import models as qmodels
 
 logger = get_logger(__name__)
 

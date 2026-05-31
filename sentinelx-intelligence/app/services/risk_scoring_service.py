@@ -1,5 +1,5 @@
 import uuid
-from datetime import timezone
+from datetime import UTC
 from typing import Any
 
 from sqlalchemy.orm import Session
@@ -26,10 +26,30 @@ SIGNAL_TYPE_TO_SCORE_TYPES: dict[str, list[str]] = {
 }
 
 
+def _signal_entity_names(sig: IntelSignal) -> list[str]:
+    names: list[str] = []
+    for ent in sig.entities or []:
+        if isinstance(ent, dict):
+            name = (ent.get("name") or ent.get("text") or "").strip()
+            if name:
+                names.append(name)
+        elif isinstance(ent, str) and ent.strip():
+            names.append(ent.strip())
+    return names
+
+
+def _signals_for_entity(db: Session, entity: Entity) -> list[IntelSignal]:
+    matched: list[IntelSignal] = []
+    for sig in db.query(IntelSignal).all():
+        if entity.name in _signal_entity_names(sig):
+            matched.append(sig)
+    return matched
+
+
 def _signal_to_dict(sig: IntelSignal) -> dict[str, Any]:
     ts = sig.timestamp or sig.created_at
     if ts and ts.tzinfo is None:
-        ts = ts.replace(tzinfo=timezone.utc)
+        ts = ts.replace(tzinfo=UTC)
     return {
         "severity": sig.severity,
         "confidence": sig.confidence,
@@ -96,9 +116,7 @@ class RiskScoringService:
         entity: Entity,
         event: CorrelatedEvent | None = None,
     ) -> list[RiskScore]:
-        signals = db.query(IntelSignal).filter(
-            IntelSignal.entities.contains([{"name": entity.name}])
-        ).all()
+        signals = _signals_for_entity(db, entity)
 
         if not signals:
             return []

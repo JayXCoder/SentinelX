@@ -35,6 +35,8 @@ def calculate_risk_score_task(self, event_id: str) -> dict:
                 "score_type": score.score_type,
                 "score_value": score.score_value,
                 "risk_level": score.risk_level,
+                "explanation": score.explanation,
+                "calculated_at": score.calculated_at.isoformat() if score.calculated_at else None,
             })
 
             if score.risk_level in ("high", "critical"):
@@ -56,6 +58,6 @@ def calculate_risk_score_task(self, event_id: str) -> dict:
     except Exception as exc:
         db.rollback()
         logger.error("Risk scoring task failed", extra={"event_id": event_id, "error": str(exc)})
-        raise self.retry(exc=exc, countdown=30)
+        raise self.retry(exc=exc, countdown=30) from exc
     finally:
         db.close()

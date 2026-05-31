@@ -1,15 +1,16 @@
-"""Security helpers — extend with auth/RBAC when required."""
-
-from fastapi import Header, HTTPException, status
+"""API key authentication — optional when API_KEY env is unset (local dev)."""
 
 from app.core.config import get_settings
+from fastapi import Header, HTTPException, status
 
 
-def verify_api_key(x_api_key: str | None = Header(default=None)) -> None:
+def verify_api_key(x_api_key: str | None = Header(default=None, alias="X-API-Key")) -> None:
     settings = get_settings()
-    expected = getattr(settings, "api_key", None)
-    if expected and x_api_key != expected:
+    expected = settings.api_key
+    if not expected:
+        return
+    if not x_api_key or x_api_key != expected:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Invalid API key",
+            detail="Invalid or missing API key",
         )

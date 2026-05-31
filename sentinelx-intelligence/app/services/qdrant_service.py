@@ -28,18 +28,28 @@ class QdrantService:
         )
         self._embedder = TextEmbedding(model_name=self.settings.embedding_model)
         self._vector_size = self.settings.embedding_vector_size
+        self._collections_ready = False
 
     def ensure_collections(self) -> None:
+        if self._collections_ready:
+            return
         for name in COLLECTIONS:
-            if not self._qdrant.collection_exists(name):
-                self._qdrant.create_collection(
-                    collection_name=name,
-                    vectors_config=qmodels.VectorParams(
-                        size=self._vector_size,
-                        distance=qmodels.Distance.COSINE,
-                    ),
+            try:
+                if not self._qdrant.collection_exists(name):
+                    self._qdrant.create_collection(
+                        collection_name=name,
+                        vectors_config=qmodels.VectorParams(
+                            size=self._vector_size,
+                            distance=qmodels.Distance.COSINE,
+                        ),
+                    )
+                    logger.info("Created Qdrant collection", extra={"collection": name})
+            except Exception as exc:
+                logger.warning(
+                    "Qdrant collection ensure skipped",
+                    extra={"collection": name, "error": str(exc)},
                 )
-                logger.info("Created Qdrant collection", extra={"collection": name})
+        self._collections_ready = True
 
     def embed_text(self, text: str) -> list[float]:
         vectors = list(self._embedder.embed([text[:8000]]))
@@ -52,7 +62,8 @@ class QdrantService:
         text: str,
         payload: dict[str, Any],
     ) -> None:
-        self.ensure_collections()
+        if not self._collections_ready:
+            self.ensure_collections()
         vector = self.embed_text(text)
         self._qdrant.upsert(
             collection_name=collection,
@@ -74,8 +85,28 @@ class QdrantService:
         score_threshold: float = 0.5,
         filter_payload: dict[str, Any] | None = None,
     ) -> list[dict[str, Any]]:
-        self.ensure_collections()
+        if not self._collections_ready:
+            self.ensure_collections()
         vector = self.embed_text(text)
+        try:
+            return self._search_vectors(
+                collection, vector, top_k, score_threshold, filter_payload
+            )
+        except Exception as exc:
+            logger.warning(
+                "Qdrant search failed",
+                extra={"collection": collection, "error": str(exc)},
+            )
+            return []
+
+    def _search_vectors(
+        self,
+        collection: str,
+        vector: list[float],
+        top_k: int,
+        score_threshold: float,
+        filter_payload: dict[str, Any] | None,
+    ) -> list[dict[str, Any]]:
         query_filter = None
         if filter_payload:
             conditions = [
@@ -87,14 +118,26 @@ class QdrantService:
             ]
             query_filter = qmodels.Filter(must=conditions)
 
-        results = self._qdrant.search(
-            collection_name=collection,
-            query_vector=vector,
-            limit=top_k,
-            score_threshold=score_threshold,
-            query_filter=query_filter,
-            with_payload=True,
-        )
+        if hasattr(self._qdrant, "search"):
+            results = self._qdrant.search(
+                collection_name=collection,
+                query_vector=vector,
+                limit=top_k,
+                score_threshold=score_threshold,
+                query_filter=query_filter,
+                with_payload=True,
+            )
+        else:
+            response = self._qdrant.query_points(
+                collection_name=collection,
+                query=vector,
+                limit=top_k,
+                score_threshold=score_threshold,
+                query_filter=query_filter,
+                with_payload=True,
+            )
+            results = response.points
+
         return [
             {
                 "id": str(r.id),
@@ -103,6 +146,7 @@ class QdrantService:
             }
             for r in results
         ]
+
 
     def health_check(self) -> dict[str, Any]:
         try:

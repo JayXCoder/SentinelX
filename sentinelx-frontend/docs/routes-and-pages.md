@@ -17,29 +17,26 @@ flowchart TB
 
 ## Page catalog
 
-| Route | File | Data source | Functionality |
-|-------|------|-------------|---------------|
-| `/` | `app/page.tsx` | None (static marketing) | Hero, use cases, platform capabilities, FAQ, CTA |
-| `/dashboard` | `app/dashboard/page.tsx` | `getDashboardOverview`, `getRiskScores` | KPI cards, summary, risk table |
-| `/dashboard/threat-feed` | `app/dashboard/threat-feed/page.tsx` | `getCyberSignals` | Cyber signals list |
-| `/dashboard/competitors` | `app/dashboard/competitors/page.tsx` | `getGtmSignals` | GTM / competitor signals |
-| `/dashboard/vendors` | `app/dashboard/vendors/page.tsx` | `getVendorSummary` | Vendor risk entities |
-| `/dashboard/alerts` | `app/dashboard/alerts/page.tsx` | `getAlerts` | High-severity active alerts |
-| `/dashboard/intelligence-explorer` | `app/dashboard/intelligence-explorer/page.tsx` | `askRagQuestion` | RAG Q&A (when service live) |
-| `/dashboard/executive-overview` | redirect | — | Redirects to `/dashboard` |
+| Route | File | Data sources | Features |
+|-------|------|--------------|----------|
+| `/` | `app/page.tsx` | Static | Marketing landing |
+| `/dashboard` | `app/dashboard/page.tsx` | `getDashboardOverview`, risk chart, top risks, correlated events, alerts | KPIs, realtime indicator |
+| `/dashboard/threat-feed` | `threat-feed/page.tsx` | `getCyberSignals` | Filters, search (`?q=`), pagination, signal modal |
+| `/dashboard/competitors` | `competitors/page.tsx` | `getGtmSignals`, `getRiskScoresByType(gtm_opportunity)` | Filters, pagination, opportunity score cards |
+| `/dashboard/vendors` | `vendors/page.tsx` | `getVendorSummary` (intelligence) | Score cards, filters, pagination, vendor modal |
+| `/dashboard/alerts` | `alerts/page.tsx` | `getAlerts` | High-severity signal alerts |
+| `/dashboard/intelligence-explorer` | `intelligence-explorer/page.tsx` | `askRagQuestion` | Question form, evidence, entities |
+| `/dashboard/executive-overview` | redirect | — | → `/dashboard` |
 
 ## Layout
 
 | File | Scope |
 |------|-------|
-| `app/layout.tsx` | Root fonts, `ThemeProvider`, global CSS |
-| `app/dashboard/layout.tsx` | `DashboardShell` — sidebar, mobile nav |
+| `app/layout.tsx` | Root fonts, `ThemeProvider` |
+| `app/dashboard/layout.tsx` | `DashboardShell` — sidebar, topbar, search, filters |
 
 ## Responsive behavior
 
-`DashboardShell` provides:
-
-- Desktop: fixed sidebar
-- Mobile: drawer overlay + hamburger
-
-Document new breakpoints or layout changes in [architecture.md](architecture.md).
+- Desktop: fixed sidebar (`xl:static`)
+- Mobile: drawer + hamburger (`DashboardShell`)
+- Tables: horizontal scroll via `overflow-x-auto`

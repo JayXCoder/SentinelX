@@ -4,10 +4,9 @@ import time
 from typing import Any
 
 import httpx
-from tenacity import retry, stop_after_attempt, wait_exponential
-
 from app.core.config import get_settings
 from app.core.logging import get_logger
+from tenacity import retry, stop_after_attempt, wait_exponential
 
 logger = get_logger(__name__)
 

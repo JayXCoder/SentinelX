@@ -63,5 +63,5 @@ class KaiZheSignalExport(BaseModel):
 
 
 class ProcessBatchRequest(BaseModel):
-    parsed_record_ids: list[UUID]
-    agents: list[str] | None = None
+    parsed_record_ids: list[UUID] = Field(min_length=1, max_length=100)
+    agents: list[str] | None = Field(default=None, max_length=20)

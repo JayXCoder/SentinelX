@@ -1,5 +1,5 @@
 import uuid
-from datetime import datetime, timedelta, timezone
+from datetime import UTC, datetime, timedelta
 from typing import Any
 
 from sqlalchemy.orm import Session
@@ -8,8 +8,8 @@ from app.core.config import get_settings
 from app.core.logging import get_logger
 from app.db.models.correlated_event import CorrelatedEvent
 from app.db.models.intelligence_signal import IntelSignal
+from app.rules import cyber_rules, financial_rules, gtm_rules, vendor_rules
 from app.rules.cyber_rules import CorrelationRule
-from app.rules import cyber_rules, vendor_rules, gtm_rules, financial_rules
 
 logger = get_logger(__name__)
 
@@ -37,7 +37,7 @@ def _signals_match_rule(
     time_window_hours: int | None = None,
 ) -> list[IntelSignal]:
     window = time_window_hours or rule.time_window_hours
-    cutoff = datetime.now(timezone.utc) - timedelta(hours=window)
+    cutoff = datetime.now(UTC) - timedelta(hours=window)
 
     matched: list[IntelSignal] = []
     for sig in signals:
@@ -45,7 +45,7 @@ def _signals_match_rule(
             continue
         sig_ts = sig.timestamp or sig.created_at
         if sig_ts.tzinfo is None:
-            sig_ts = sig_ts.replace(tzinfo=timezone.utc)
+            sig_ts = sig_ts.replace(tzinfo=UTC)
         if sig_ts < cutoff:
             continue
         matched.append(sig)
@@ -113,7 +113,7 @@ class CorrelationService:
             return []
 
         window = time_window_hours or self._settings.correlation_time_window_hours
-        cutoff = datetime.now(timezone.utc) - timedelta(hours=window)
+        cutoff = datetime.now(UTC) - timedelta(hours=window)
         signals = db.query(IntelSignal).filter(IntelSignal.created_at >= cutoff).all()
         if anchor not in signals:
             signals.append(anchor)
@@ -138,7 +138,7 @@ class CorrelationService:
             timestamps_tz = []
             for t in timestamps:
                 if t.tzinfo is None:
-                    t = t.replace(tzinfo=timezone.utc)
+                    t = t.replace(tzinfo=UTC)
                 timestamps_tz.append(t)
 
             event = CorrelatedEvent(
@@ -152,7 +152,10 @@ class CorrelationService:
                 ),
                 involved_entities=_build_involved_entities(matched),
                 signal_ids=signal_ids,
-                correlation_reason=f"Rule: {rule.rule_name}. Matched {len(matched)} signals in {rule.time_window_hours}h window.",
+                correlation_reason=(
+                    f"Rule: {rule.rule_name}. Matched {len(matched)} signals in "
+                    f"{rule.time_window_hours}h window."
+                ),
                 confidence=round(
                     sum(s.confidence for s in matched) / len(matched), 3
                 ),

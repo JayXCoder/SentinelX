@@ -1,17 +1,61 @@
 "use client";
 
+import Link from 'next/link';
+import { useRouter } from 'next/navigation';
+import { useEffect, useMemo, useState } from 'react';
 import {
   dashboardButtonClass,
   dashboardCardClass,
-  dashboardPanelClass,
   PageHeader,
 } from '@/components/dashboard/page-header';
 import { ErrorState } from '@/components/dashboard/error-state';
+import { FilterBar } from '@/components/dashboard/filter-bar';
 import { LoadingState } from '@/components/dashboard/loading-state';
+import { PaginationControls } from '@/components/dashboard/pagination-controls';
+import { ScoreCard } from '@/components/dashboard/score-card';
 import { useVendorRisk } from '@/hooks/use-vendor-risk';
+import { apiClient } from '@/lib/api-client';
+import { useFilters } from '@/hooks/use-filters';
+import { paginate } from '@/lib/pagination';
+import { useDashboardStore } from '@/stores/dashboard-store';
+const PAGE_SIZE = 6;
 
 export default function VendorsPage() {
+  const router = useRouter();
   const { loading, error, data, refresh } = useVendorRisk();
+  const { selectedRiskLevel } = useFilters();
+  const searchQuery = useDashboardStore((state) => state.searchQuery);
+  const [page, setPage] = useState(1);
+  const [vendorSignals, setVendorSignals] = useState<Record<string, string>>({});
+
+  useEffect(() => {
+    void apiClient.getVendorSignals().then((signals) => {
+      const map: Record<string, string> = {};
+      for (const s of signals) {
+        for (const e of s.entities) {
+          map[e] = s.id;
+        }
+      }
+      setVendorSignals(map);
+    });
+  }, []);
+
+  const filtered = useMemo(() => {
+    const entities = data?.entities ?? [];
+    return entities.filter((entity) => {
+      if (selectedRiskLevel !== 'all' && entity.risk_level !== selectedRiskLevel) return false;
+      if (searchQuery.trim()) {
+        const query = searchQuery.toLowerCase();
+        return (
+          entity.entity_name.toLowerCase().includes(query) ||
+          entity.explanation.toLowerCase().includes(query)
+        );
+      }
+      return true;
+    });
+  }, [data?.entities, selectedRiskLevel, searchQuery]);
+
+  const paged = useMemo(() => paginate(filtered, page, PAGE_SIZE), [filtered, page]);
 
   return (
     <section className="space-y-6">
@@ -19,14 +63,11 @@ export default function VendorsPage() {
         {data?.summary}
       </PageHeader>
 
-      <div className="grid gap-4 lg:grid-cols-2">
-        <div className={dashboardPanelClass}>Vendor risk score trend</div>
-        <div className={dashboardPanelClass}>Breach and outage history</div>
-      </div>
+      <FilterBar showEntity />
 
       <div className={dashboardCardClass}>
         <div className="flex items-center justify-between gap-4">
-          <h3 className="text-lg font-medium text-foreground">Vendor intelligence feed</h3>
+          <h3 className="text-lg font-medium text-foreground">Vendor risk scores</h3>
           <button type="button" onClick={() => void refresh()} className={dashboardButtonClass}>
             Refresh
           </button>
@@ -39,30 +80,45 @@ export default function VendorsPage() {
           <div className="mt-4">
             <ErrorState message={error} />
           </div>
-        ) : data?.entities?.length ? (
-          <div className="mt-4 space-y-3">
-            {data.entities.map((entity) => (
-              <div
-                key={entity.id}
-                className="flex items-center justify-between rounded-2xl border border-border bg-background px-4 py-4"
-              >
-                <div>
-                  <p className="font-medium text-foreground">{entity.entity_name}</p>
-                  <p className="mt-1 text-sm text-muted">{entity.explanation}</p>
-                </div>
-                <div className="text-right">
-                  <p className="text-sm uppercase tracking-[0.2em] text-accent">{entity.risk_level}</p>
-                  <p className="mt-1 font-display text-2xl text-foreground">{entity.score_value}</p>
-                </div>
-              </div>
-            ))}
+        ) : paged.total > 0 ? (
+          <div className="mt-4 space-y-4">
+            <div className="grid gap-4 md:grid-cols-2">
+              {paged.items.map((entity) => (
+                <ScoreCard
+                  key={entity.id}
+                  score={entity}
+                  onSelect={(score) => {
+                    const signalId = vendorSignals[score.entity_name];
+                    if (signalId) {
+                      router.push(
+                        `/dashboard/signals/${signalId}?from=${encodeURIComponent('/dashboard/vendors')}&fromLabel=${encodeURIComponent('Vendors')}`,
+                      );
+                    }
+                  }}
+                />
+              ))}
+            </div>
+            <PaginationControls
+              page={paged.page}
+              totalPages={paged.totalPages}
+              total={paged.total}
+              onPageChange={setPage}
+            />
           </div>
         ) : (
           <p className="mt-4 rounded-2xl border border-border bg-background p-5 text-sm text-muted">
-            No vendor risk signals yet.
+            No vendor risk scores yet.
           </p>
         )}
       </div>
+
+      <p className="text-sm text-muted">
+        Click a vendor card to open linked intelligence with sources and AI. Or{' '}
+        <Link href="/dashboard/workspace" className="text-accent hover:underline">
+          manage sources in Workspace
+        </Link>
+        .
+      </p>
     </section>
   );
 }

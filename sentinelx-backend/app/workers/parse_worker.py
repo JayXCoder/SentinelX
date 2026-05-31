@@ -41,6 +41,6 @@ def parse_raw_record_task(self, raw_record_id: str) -> dict:
         return {"parsed_record_id": str(parsed.id)}
     except Exception as exc:
         db.rollback()
-        raise self.retry(exc=exc, countdown=20)
+        raise self.retry(exc=exc, countdown=20) from exc
     finally:
         db.close()

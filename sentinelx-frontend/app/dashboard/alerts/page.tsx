@@ -1,5 +1,6 @@
 "use client";
 
+import Link from 'next/link';
 import { dashboardButtonClass, dashboardCardClass, PageHeader } from '@/components/dashboard/page-header';
 import { ErrorState } from '@/components/dashboard/error-state';
 import { LoadingState } from '@/components/dashboard/loading-state';
@@ -11,7 +12,7 @@ export default function AlertsPage() {
   return (
     <section className="space-y-6">
       <PageHeader eyebrow="Alerts" title="Notification visibility and response">
-        High-severity intelligence signals surfaced from the SentinelX backend.
+        Each alert links to full source provenance, continuous story, and team notes.
       </PageHeader>
 
       <div className={dashboardCardClass}>
@@ -32,15 +33,24 @@ export default function AlertsPage() {
         ) : data?.active?.length ? (
           <div className="mt-4 space-y-3">
             {data.active.map((alert) => (
-              <div key={alert.id} className="rounded-2xl border border-border bg-background p-5">
+              <Link
+                key={alert.id}
+                href={`/dashboard/signals/${alert.id}?from=${encodeURIComponent('/dashboard/alerts')}&fromLabel=${encodeURIComponent('Alerts')}`}
+                className="block rounded-2xl border border-border bg-background p-5 transition hover:border-accent/30 hover:bg-accent-soft/30"
+              >
                 <div className="flex items-center justify-between gap-4">
                   <p className="font-medium text-foreground">{alert.title}</p>
                   <span className="rounded-full border border-rose-500/25 bg-rose-500/10 px-3 py-1 text-xs text-rose-800 dark:text-rose-200">
                     {alert.severity}
                   </span>
                 </div>
-                <p className="mt-2 text-xs text-muted">{new Date(alert.created_at).toLocaleString()}</p>
-              </div>
+                {alert.summary ? (
+                  <p className="mt-2 line-clamp-2 text-sm text-muted">{alert.summary}</p>
+                ) : null}
+                <p className="mt-2 text-xs text-muted">
+                  {new Date(alert.created_at).toLocaleString()} · View sources & story →
+                </p>
+              </Link>
             ))}
           </div>
         ) : (

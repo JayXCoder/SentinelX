@@ -3,10 +3,17 @@ import uuid
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 
+from app.core.pagination import DEFAULT_PAGE_LIMIT, LimitQuery, SkipQuery
+from app.core.security import verify_api_key
 from app.db.models.entity import Entity
 from app.db.models.relationship import EntityRelationship
 from app.db.session import get_db
-from app.schemas.graph import EntityOut, EntityRelationshipOut, EntityWithRelationships, GraphTimelineOut
+from app.schemas.graph import (
+    EntityOut,
+    EntityRelationshipOut,
+    EntityWithRelationships,
+    GraphTimelineOut,
+)
 from app.services.knowledge_graph_service import KnowledgeGraphService
 
 router = APIRouter(prefix="/graph", tags=["knowledge-graph"])
@@ -14,8 +21,8 @@ router = APIRouter(prefix="/graph", tags=["knowledge-graph"])
 
 @router.get("/entities", response_model=list[EntityOut])
 def list_entities(
-    skip: int = 0,
-    limit: int = 50,
+    skip: SkipQuery = 0,
+    limit: LimitQuery = DEFAULT_PAGE_LIMIT,
     entity_type: str | None = None,
     db: Session = Depends(get_db),
 ) -> list[Entity]:
@@ -62,8 +69,8 @@ def entity_with_relationships(
 
 @router.get("/relationships", response_model=list[EntityRelationshipOut])
 def list_relationships(
-    skip: int = 0,
-    limit: int = 50,
+    skip: SkipQuery = 0,
+    limit: LimitQuery = DEFAULT_PAGE_LIMIT,
     relationship_type: str | None = None,
     db: Session = Depends(get_db),
 ) -> list[EntityRelationship]:
@@ -82,8 +89,9 @@ def entity_timeline(entity_id: uuid.UUID, db: Session = Depends(get_db)) -> Grap
     svc = KnowledgeGraphService()
     raw_timeline = svc.get_timeline(db, entity_id)
 
-    from app.schemas.graph import GraphTimelineEntry
     from datetime import datetime
+
+    from app.schemas.graph import GraphTimelineEntry
 
     entries = []
     for item in raw_timeline:
@@ -106,7 +114,10 @@ def entity_timeline(entity_id: uuid.UUID, db: Session = Depends(get_db)) -> Grap
 
 
 @router.post("/rebuild")
-def rebuild_graph(db: Session = Depends(get_db)) -> dict:
+def rebuild_graph(
+    db: Session = Depends(get_db),
+    _: None = Depends(verify_api_key),
+) -> dict:
     svc = KnowledgeGraphService()
     result = svc.rebuild(db)
     return {"status": "ok", **result}

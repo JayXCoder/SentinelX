@@ -1,11 +1,11 @@
 from datetime import datetime
-from enum import Enum
+from enum import StrEnum
 from uuid import UUID
 
 from pydantic import BaseModel
 
 
-class ScoreType(str, Enum):
+class ScoreType(StrEnum):
     cyber_exposure = "cyber_exposure"
     vendor_risk = "vendor_risk"
     gtm_opportunity = "gtm_opportunity"
@@ -14,7 +14,7 @@ class ScoreType(str, Enum):
     reputation_risk = "reputation_risk"
 
 
-class RiskLevel(str, Enum):
+class RiskLevel(StrEnum):
     low = "low"
     medium = "medium"
     high = "high"

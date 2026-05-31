@@ -19,39 +19,56 @@ sequenceDiagram
   participant R as App Router
   participant S as DashboardShell
   participant P as Page component
-  participant API as apiClient
+  participant BE as Backend :4000
+  participant IN as Intelligence :4001
 
   U->>R: /dashboard
-  R->>S: layout + mobile drawer
+  R->>S: layout + search/filters
   S->>P: render child route
-  P->>API: fetch signals / aggregates
-  API-->>P: data or ApiError
-  P-->>U: tables / cards / empty state
+  P->>BE: signals / health
+  P->>IN: analytics / scores / correlation
+  BE-->>P: IntelligenceSignal[]
+  IN-->>P: scores / events / RAG
+  P-->>U: cards / tables / empty state
 ```
 
-## Overview page data derivation
+## Overview page data
 
-`getDashboardOverview()` does not call a dedicated backend overview endpoint. It derives:
+`getDashboardOverview()` prefers `GET /analytics/overview` on the intelligence service, combined with backend signals for summary text and opportunity score. Falls back to signal-only aggregation if intelligence is unreachable.
+
+## Threat feed filters
 
 ```mermaid
 flowchart LR
-  SIG[GET /agents/signals limit=100] --> COUNT[count signals]
-  SIG --> CRIT[severity >= 7 → critical_alerts]
-  SIG --> VR[vendor_risk count]
-  SIG --> GTM[gtm → opportunity_score]
-  SIG --> EXEC[executive_summary → summary text]
+  fetch[getCyberSignals] --> filter[filterSignals store]
+  filter --> page[paginate page size 8]
+  page --> UI[SignalFeed + Modal]
+  search[SearchDialog ?q=] --> filter
 ```
+
+## Realtime
+
+```mermaid
+stateDiagram-v2
+  [*] --> TryWS: useRealtimeEvents mount
+  TryWS --> Connected: WS /ws open on :4000
+  TryWS --> Polling: timeout / error
+  Connected --> Polling: socket close
+  Polling --> Polling: poll signals every 30s
+```
+
+Backend `realtime_listener` tails Redis streams and pushes JSON to all WebSocket clients.
 
 ## Intelligence explorer (RAG)
 
 ```mermaid
 stateDiagram-v2
   [*] --> Idle
-  Idle --> Loading: user submits question
-  Loading --> Success: POST /rag/ask 200
-  Loading --> Unavailable: 404/502
-  Unavailable --> Idle: show Kai Zhe message
+  Idle --> Loading: POST /rag/ask
+  Loading --> Success: 200 + evidence
+  Loading --> Error: network / 5xx
   Success --> Idle
+  Error --> Idle
 ```
 
 ## Theme workflow
@@ -64,15 +81,15 @@ flowchart LR
   persist --> apply
 ```
 
-## Build & deploy workflow
+## Build & deploy
 
 ```mermaid
 flowchart TD
-  dev[npm run dev] --> local[:3000 → API :4000]
-  ci[GitHub Actions npm run build] --> artifact[.next standalone]
-  docker[Docker build with ARG NEXT_PUBLIC_*] --> compose[compose frontend :4002]
+  dev[npm run dev] --> local[:3000 → API :4000 + :4001]
+  ci[GitHub Actions npm run build] --> artifact[.next]
+  docker[Docker ARG NEXT_PUBLIC_*] --> compose[compose frontend :4002]
 ```
 
-## Error handling convention
+## Error handling
 
-Pages should catch `ApiError` and use `getApiErrorMessage()` for display. Empty arrays are valid for list UIs; distinguish “no data yet” vs “service down”.
+Catch `ApiError` via `getApiErrorMessage()`. Empty arrays mean “no data yet”; intelligence fallbacks avoid hard failures on list pages except RAG (user-facing error).

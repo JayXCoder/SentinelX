@@ -18,6 +18,9 @@ class Settings(BaseSettings):
     debug: bool = Field(default=False, validation_alias="SENTINELX_DEBUG")
     # CORS_ORIGINS  (comma-separated, e.g. "http://localhost:3000,https://app.example.com")
     cors_origins: str = Field(default="*", validation_alias="CORS_ORIGINS")
+    # API_KEY — when set, mutating routes require X-API-Key header
+    api_key: str | None = Field(default=None, validation_alias="API_KEY")
+    rate_limit_per_minute: int = Field(default=60, validation_alias="RATE_LIMIT_PER_MINUTE")
 
     # ── Database ───────────────────────────────────────────────────────────
     # DATABASE_URL
@@ -30,9 +33,15 @@ class Settings(BaseSettings):
     # REDIS_URL
     redis_url: str = Field(default="redis://redis:6379/0", validation_alias="REDIS_URL")
     # CELERY_BROKER_URL
-    celery_broker_url: str = Field(default="redis://redis:6379/0", validation_alias="CELERY_BROKER_URL")
+    celery_broker_url: str = Field(
+        default="redis://redis:6379/0",
+        validation_alias="CELERY_BROKER_URL",
+    )
     # CELERY_RESULT_BACKEND
-    celery_result_backend: str = Field(default="redis://redis:6379/1", validation_alias="CELERY_RESULT_BACKEND")
+    celery_result_backend: str = Field(
+        default="redis://redis:6379/1",
+        validation_alias="CELERY_RESULT_BACKEND",
+    )
 
     # ── Qdrant ─────────────────────────────────────────────────────────────
     # QDRANT_URL
@@ -42,7 +51,10 @@ class Settings(BaseSettings):
 
     # ── SGLang / Qwen ──────────────────────────────────────────────────────
     # SGLANG_BASE_URL
-    sglang_base_url: str = Field(default="http://sglang_qwen:30000", validation_alias="SGLANG_BASE_URL")
+    sglang_base_url: str = Field(
+        default="http://sglang_qwen:30000",
+        validation_alias="SGLANG_BASE_URL",
+    )
     # SGLANG_MODEL
     sglang_model: str = Field(default="Qwen/Qwen3.5-2B", validation_alias="SGLANG_MODEL")
     # SGLANG_TIMEOUT_SECONDS
@@ -52,7 +64,10 @@ class Settings(BaseSettings):
 
     # ── Embeddings ─────────────────────────────────────────────────────────
     # EMBEDDING_MODEL
-    embedding_model: str = Field(default="BAAI/bge-small-en-v1.5", validation_alias="EMBEDDING_MODEL")
+    embedding_model: str = Field(
+        default="BAAI/bge-small-en-v1.5",
+        validation_alias="EMBEDDING_MODEL",
+    )
     # EMBEDDING_VECTOR_SIZE
     embedding_vector_size: int = Field(default=384, validation_alias="EMBEDDING_VECTOR_SIZE")
 
@@ -64,7 +79,10 @@ class Settings(BaseSettings):
 
     # ── Correlation ────────────────────────────────────────────────────────
     # CORRELATION_TIME_WINDOW_HOURS
-    correlation_time_window_hours: int = Field(default=72, validation_alias="CORRELATION_TIME_WINDOW_HOURS")
+    correlation_time_window_hours: int = Field(
+        default=72,
+        validation_alias="CORRELATION_TIME_WINDOW_HOURS",
+    )
     # CORRELATION_MIN_SIGNALS
     correlation_min_signals: int = Field(default=2, validation_alias="CORRELATION_MIN_SIGNALS")
 
