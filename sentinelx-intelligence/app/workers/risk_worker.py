@@ -35,6 +35,8 @@ def calculate_risk_score_task(self, event_id: str) -> dict:
                 "score_type": score.score_type,
                 "score_value": score.score_value,
                 "risk_level": score.risk_level,
+                "explanation": score.explanation,
+                "calculated_at": score.calculated_at.isoformat() if score.calculated_at else None,
             })
 
             if score.risk_level in ("high", "critical"):

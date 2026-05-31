@@ -1,4 +1,14 @@
-import { BarChart3, Bell, LayoutDashboard, Radar, ShieldAlert, Sparkles, Users, X } from 'lucide-react';
+import {
+  BarChart3,
+  Bell,
+  LayoutDashboard,
+  Radar,
+  Settings2,
+  ShieldAlert,
+  Sparkles,
+  Users,
+  X,
+} from 'lucide-react';
 import Link from 'next/link';
 
 const items = [
@@ -8,6 +18,7 @@ const items = [
   { label: 'Vendors', icon: Users, href: '/dashboard/vendors' },
   { label: 'Alerts', icon: Bell, href: '/dashboard/alerts' },
   { label: 'Explorer', icon: Sparkles, href: '/dashboard/intelligence-explorer' },
+  { label: 'Workspace', icon: Settings2, href: '/dashboard/workspace' },
 ];
 
 type SidebarProps = {
@@ -25,10 +36,10 @@ export function Sidebar({ onNavigate }: SidebarProps) {
             className="inline-flex items-center gap-2 rounded-full border border-border bg-accent-soft px-3 py-1 text-xs font-semibold text-accent"
           >
             <BarChart3 className="h-3.5 w-3.5" aria-hidden />
-            SentinelX
+            ChamPeng · SentinelX
           </Link>
           <p className="mt-4 text-sm leading-6 text-muted">
-            Executive summaries, live signals, vendor risk, and exploration.
+            Monitor OpenAI, Anthropic, Cursor, and Antigravity for your coding-agent platform.
           </p>
         </div>
         {onNavigate ? (

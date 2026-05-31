@@ -18,6 +18,9 @@ class Settings(BaseSettings):
     debug: bool = Field(default=False, validation_alias="SENTINELX_DEBUG")
     # CORS_ORIGINS  (comma-separated, e.g. "http://localhost:3000,https://app.example.com")
     cors_origins: str = Field(default="*", validation_alias="CORS_ORIGINS")
+    # API_KEY — when set, mutating routes require X-API-Key header
+    api_key: str | None = Field(default=None, validation_alias="API_KEY")
+    rate_limit_per_minute: int = Field(default=60, validation_alias="RATE_LIMIT_PER_MINUTE")
 
     # ── Database ───────────────────────────────────────────────────────────
     # DATABASE_URL

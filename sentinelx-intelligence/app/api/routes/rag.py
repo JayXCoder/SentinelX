@@ -3,6 +3,8 @@ import uuid
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 
+from app.core.pagination import DEFAULT_PAGE_LIMIT, LimitQuery, SkipQuery
+from app.core.security import verify_api_key
 from app.db.models.rag_memory import RAGMemory
 from app.db.session import get_db
 from app.schemas.rag import RAGAskRequest, RAGMemoryOut, RAGQueryRequest, RAGResponse
@@ -12,7 +14,11 @@ router = APIRouter(prefix="/rag", tags=["rag"])
 
 
 @router.post("/query")
-def rag_query(request: RAGQueryRequest, db: Session = Depends(get_db)) -> list[dict]:
+def rag_query(
+    request: RAGQueryRequest,
+    db: Session = Depends(get_db),
+    _: None = Depends(verify_api_key),
+) -> list[dict]:
     svc = RAGService()
     results = svc.query(
         text=request.text,
@@ -24,13 +30,19 @@ def rag_query(request: RAGQueryRequest, db: Session = Depends(get_db)) -> list[d
 
 
 @router.post("/ask", response_model=RAGResponse)
-def rag_ask(request: RAGAskRequest, db: Session = Depends(get_db)) -> RAGResponse:
+def rag_ask(
+    request: RAGAskRequest,
+    db: Session = Depends(get_db),
+    _: None = Depends(verify_api_key),
+) -> RAGResponse:
     svc = RAGService()
     result = svc.ask(
         db=db,
         question=request.question,
         entity_id=request.entity_id,
         top_k=request.top_k,
+        workspace_context=request.workspace_context,
+        signal_context=request.signal_context,
     )
     return RAGResponse(
         answer=result.get("answer", ""),
@@ -45,8 +57,8 @@ def rag_ask(request: RAGAskRequest, db: Session = Depends(get_db)) -> RAGRespons
 @router.get("/memory/{entity_id}", response_model=list[RAGMemoryOut])
 def memory_for_entity(
     entity_id: uuid.UUID,
-    skip: int = 0,
-    limit: int = 20,
+    skip: SkipQuery = 0,
+    limit: LimitQuery = 20,
     db: Session = Depends(get_db),
 ) -> list[RAGMemory]:
     return (
@@ -60,7 +72,11 @@ def memory_for_entity(
 
 
 @router.post("/reindex")
-def reindex(entity_id: uuid.UUID, db: Session = Depends(get_db)) -> dict:
+def reindex(
+    entity_id: uuid.UUID,
+    db: Session = Depends(get_db),
+    _: None = Depends(verify_api_key),
+) -> dict:
     from app.db.models.entity import Entity
 
     entity = db.query(Entity).filter(Entity.id == entity_id).first()

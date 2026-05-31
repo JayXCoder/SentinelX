@@ -9,7 +9,7 @@ export function AnnouncementBar() {
           href="/dashboard"
           className="group inline-flex flex-wrap items-center justify-center gap-1 text-sm text-muted transition hover:text-foreground"
         >
-          <span>SentinelX intelligence pipeline is live — explore the dashboard.</span>
+          <span>ChamPeng competitive intelligence is live — OpenAI, Anthropic, Cursor, Antigravity.</span>
           <span className="font-medium text-foreground underline-offset-4 group-hover:underline">
             Open dashboard
           </span>

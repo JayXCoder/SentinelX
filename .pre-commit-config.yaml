@@ -1,0 +1,23 @@
+repos:
+  - repo: https://github.com/astral-sh/ruff-pre-commit
+    rev: v0.8.4
+    hooks:
+      - id: ruff
+        args: [--fix]
+        files: ^sentinelx-(backend|intelligence)/
+      - id: ruff-format
+        files: ^sentinelx-(backend|intelligence)/
+
+  - repo: local
+    hooks:
+      - id: backend-pytest
+        name: backend pytest (fast)
+        entry: bash -c 'cd sentinelx-backend && pytest -q tests/test_health.py tests/test_parser.py'
+        language: system
+        pass_filenames: false
+      - id: frontend-lint
+        name: frontend lint
+        entry: bash -c 'cd sentinelx-frontend && npm run lint'
+        language: system
+        pass_filenames: false
+        files: ^sentinelx-frontend/

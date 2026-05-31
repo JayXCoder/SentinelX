@@ -4,6 +4,7 @@ import { ArrowRight } from 'lucide-react';
 import { DemoShowcase } from '@/components/marketing/demo-showcase';
 import { FadeInUp, FloatSlow } from '@/components/marketing/motion';
 import { CtaButton } from '@/components/ui/cta-button';
+import { CHAMPENG } from '@/lib/champeng';
 
 const stats = [
   { value: '6', label: 'specialized AI agents' },
@@ -16,10 +17,10 @@ export function HeroSection() {
       <div className="mx-auto grid max-w-6xl gap-12 lg:grid-cols-[1fr_1.05fr] lg:items-center lg:gap-16">
         <FadeInUp>
           <h1 className="font-display text-[2.75rem] leading-[1.05] tracking-tight text-foreground sm:text-6xl lg:text-[4.25rem]">
-            A dedicated lens for every threat
+            Intelligence for {CHAMPENG.companyName}
           </h1>
           <p className="mt-6 max-w-lg text-lg leading-relaxed text-muted sm:text-xl">
-            AI agents monitoring intelligence, risk, and opportunity — tailored for your security and GTM teams, 24/7.
+            {CHAMPENG.tagline}
           </p>
 
           <div className="mt-8 flex flex-wrap items-center gap-4">

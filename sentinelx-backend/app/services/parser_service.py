@@ -16,12 +16,17 @@ ENTITY_PATTERNS = [
     (r"\b(?:AWS|AKIA)[A-Z0-9]{16,}\b", "aws_key"),
 ]
 
+REDACT_PATTERNS = [
+    (r"\b(?:sk|pk)_(?:live|test)_[A-Za-z0-9]+\b", "[REDACTED_API_KEY]"),
+    (r"\b(?:AWS|AKIA)[A-Z0-9]{16,}\b", "[REDACTED_AWS_KEY]"),
+]
+
 
 class ParserService:
     def parse(self, *, html: str | None, text: str | None, url: str) -> dict[str, Any]:
         soup = BeautifulSoup(html or text or "", "lxml")
         title = self._extract_title(soup)
-        clean_text = self._clean_text(soup, fallback=text or "")
+        clean_text = self.redact_sensitive_text(self._clean_text(soup, fallback=text or ""))
         entities = self._extract_entities(clean_text)
         language = self._detect_language(clean_text)
         published_at = self._extract_published_at(soup)
@@ -37,6 +42,13 @@ class ParserService:
                 "word_count": len(clean_text.split()),
             },
         }
+
+    @staticmethod
+    def redact_sensitive_text(text: str) -> str:
+        redacted = text
+        for pattern, replacement in REDACT_PATTERNS:
+            redacted = re.sub(pattern, replacement, redacted, flags=re.IGNORECASE)
+        return redacted
 
     def _extract_title(self, soup: BeautifulSoup) -> str | None:
         if soup.title and soup.title.string:

@@ -1,10 +1,10 @@
 from contextlib import asynccontextmanager
 
 from fastapi import FastAPI
-from fastapi.middleware.cors import CORSMiddleware
-
 from app.api.routes import analytics, correlation, health, knowledge_graph, rag, risk_scores
 from app.core.config import get_settings
+from app.core.cors import configure_cors
+from app.core.middleware import ObservabilityMiddleware
 from app.core.logging import get_logger, setup_logging
 from app.db.base import Base
 from app.db.session import engine
@@ -39,14 +39,8 @@ def create_app() -> FastAPI:
     settings = get_settings()
     app = FastAPI(title=settings.app_name, version="1.0.0", lifespan=lifespan)
 
-    origins = [o.strip() for o in settings.cors_origins.split(",")]
-    app.add_middleware(
-        CORSMiddleware,
-        allow_origins=origins,
-        allow_credentials=True,
-        allow_methods=["*"],
-        allow_headers=["*"],
-    )
+    configure_cors(app, settings.cors_origins)
+    app.add_middleware(ObservabilityMiddleware)
 
     app.include_router(health.router)
     app.include_router(correlation.router)

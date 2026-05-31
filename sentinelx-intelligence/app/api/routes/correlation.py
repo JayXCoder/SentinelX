@@ -3,6 +3,8 @@ import uuid
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 
+from app.core.pagination import DEFAULT_PAGE_LIMIT, LimitQuery, SkipQuery
+from app.core.security import verify_api_key
 from app.db.models.correlated_event import CorrelatedEvent
 from app.db.models.entity import Entity
 from app.db.session import get_db
@@ -13,7 +15,11 @@ router = APIRouter(prefix="/correlation", tags=["correlation"])
 
 
 @router.post("/run", response_model=CorrelationRunResult)
-def run_correlation(request: CorrelationRunRequest, db: Session = Depends(get_db)) -> CorrelationRunResult:
+def run_correlation(
+    request: CorrelationRunRequest,
+    db: Session = Depends(get_db),
+    _: None = Depends(verify_api_key),
+) -> CorrelationRunResult:
     svc = CorrelationService()
     events = svc.run_all(db, time_window_hours=request.time_window_hours)
     return CorrelationRunResult(
@@ -28,6 +34,7 @@ def run_correlation_for_signal(
     signal_id: str,
     request: CorrelationRunRequest,
     db: Session = Depends(get_db),
+    _: None = Depends(verify_api_key),
 ) -> CorrelationRunResult:
     svc = CorrelationService()
     events = svc.run_for_signal(db, signal_id, time_window_hours=request.time_window_hours)
@@ -40,8 +47,8 @@ def run_correlation_for_signal(
 
 @router.get("/events", response_model=list[CorrelatedEventOut])
 def list_events(
-    skip: int = 0,
-    limit: int = 50,
+    skip: SkipQuery = 0,
+    limit: LimitQuery = DEFAULT_PAGE_LIMIT,
     event_type: str | None = None,
     db: Session = Depends(get_db),
 ) -> list[CorrelatedEvent]:

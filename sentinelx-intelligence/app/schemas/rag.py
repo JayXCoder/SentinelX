@@ -15,6 +15,8 @@ class RAGAskRequest(BaseModel):
     question: str = Field(min_length=5)
     entity_id: UUID | None = None
     top_k: int = Field(default=5, ge=1, le=20)
+    workspace_context: str | None = Field(default=None, max_length=12000)
+    signal_context: str | None = Field(default=None, max_length=12000)
 
 
 class RAGResponse(BaseModel):

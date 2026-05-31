@@ -72,7 +72,7 @@ jobs:
         run: alembic upgrade head
 
       - name: Run tests
-        run: pytest -q
+        run: pytest -q --cov=app --cov-report=term-missing
 
   frontend-build:
     runs-on: ubuntu-latest
@@ -91,6 +91,12 @@ jobs:
 
       - name: Install dependencies
         run: npm ci
+
+      - name: Lint
+        run: npm run lint
+
+      - name: Unit tests
+        run: npm run test
 
       - name: Production build
         run: npm run build
@@ -141,10 +147,65 @@ jobs:
         run: |
           docker compose build api frontend
 
-  intelligence-scaffold:
+  intelligence-lint-test:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_USER: sentinelx
+          POSTGRES_PASSWORD: sentinelx
+          POSTGRES_DB: sentinelx
+        ports:
+          - 4543:5432
+        options: >-
+          --health-cmd "pg_isready -U sentinelx -d sentinelx"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+      redis:
+        image: redis:7-alpine
+        ports:
+          - 4637:6379
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 5s
+          --health-timeout 3s
+          --health-retries 10
+      qdrant:
+        image: qdrant/qdrant:v1.12.5
+        ports:
+          - 4633:6333
+
+    defaults:
+      run:
+        working-directory: sentinelx-intelligence
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+          cache-dependency-path: sentinelx-intelligence/requirements.txt
+
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+
+      - name: Ruff lint
+        run: ruff check app tests
+
+      - name: Run migrations
+        run: alembic upgrade head
+
+      - name: Run tests
+        run: pytest -q --cov=app --cov-report=term-missing
+
+  compose-prod-config:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
 
-      - name: Verify intelligence scaffold exists
-        run: test -f sentinelx-intelligence/README.md
+      - name: Validate production compose overlay
+        run: docker compose -f docker-compose.yml -f docker-compose.prod.yml config --quiet

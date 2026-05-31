@@ -73,7 +73,7 @@ class KnowledgeGraphService:
                 last_seen=now,
             )
             db.add(entity)
-            logger.info("Entity created", extra={"name": name, "type": inferred_type})
+            logger.info("Entity created", extra={"entity_name": name, "entity_type": inferred_type})
 
         db.flush()
         return entity

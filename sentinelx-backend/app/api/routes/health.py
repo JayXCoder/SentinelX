@@ -1,7 +1,9 @@
 from fastapi import APIRouter, Depends
 from sqlalchemy import text
 from sqlalchemy.orm import Session
+from starlette.responses import Response
 
+from app.core.metrics import metrics_response
 from app.db.session import get_db
 from app.services.bright_data_service import BrightDataService
 from app.services.embedding_service import EmbeddingService
@@ -16,6 +18,11 @@ def health() -> dict:
     return {"status": "ok", "service": "sentinelx-backend"}
 
 
+@router.get("/metrics")
+def metrics() -> Response:
+    return metrics_response()
+
+
 @router.get("/health/redis")
 def health_redis() -> dict:
     streams = get_redis_stream_service()
@@ -28,8 +35,8 @@ def health_postgres(db: Session = Depends(get_db)) -> dict:
     try:
         db.execute(text("SELECT 1"))
         return {"status": "ok", "postgres": True}
-    except Exception as exc:
-        return {"status": "unavailable", "postgres": False, "error": str(exc)}
+    except Exception:
+        return {"status": "unavailable", "postgres": False}
 
 
 @router.get("/health/qdrant")

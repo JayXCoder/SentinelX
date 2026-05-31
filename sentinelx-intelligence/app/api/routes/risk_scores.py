@@ -3,6 +3,8 @@ import uuid
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 
+from app.core.pagination import DEFAULT_PAGE_LIMIT, LimitQuery, SkipQuery
+from app.core.security import verify_api_key
 from app.db.models.entity import Entity
 from app.db.models.risk_score import RiskScore
 from app.db.session import get_db
@@ -13,7 +15,11 @@ router = APIRouter(prefix="/risk-scores", tags=["risk-scores"])
 
 
 @router.post("/recalculate", response_model=RecalculateResult)
-def recalculate_all(request: RecalculateRequest, db: Session = Depends(get_db)) -> RecalculateResult:
+def recalculate_all(
+    request: RecalculateRequest,
+    db: Session = Depends(get_db),
+    _: None = Depends(verify_api_key),
+) -> RecalculateResult:
     svc = RiskScoringService()
     scores = svc.recalculate_all(db)
     entity_ids = list({str(s.entity_id) for s in scores})
@@ -25,6 +31,7 @@ def recalculate_entity(
     entity_id: uuid.UUID,
     request: RecalculateRequest,
     db: Session = Depends(get_db),
+    _: None = Depends(verify_api_key),
 ) -> RecalculateResult:
     entity = db.query(Entity).filter(Entity.id == entity_id).first()
     if not entity:
@@ -36,8 +43,8 @@ def recalculate_entity(
 
 @router.get("", response_model=list[RiskScoreOut])
 def list_scores(
-    skip: int = 0,
-    limit: int = 50,
+    skip: SkipQuery = 0,
+    limit: LimitQuery = DEFAULT_PAGE_LIMIT,
     risk_level: str | None = None,
     db: Session = Depends(get_db),
 ) -> list[RiskScore]:
@@ -71,8 +78,8 @@ def scores_for_entity(
 @router.get("/type/{score_type}", response_model=list[RiskScoreOut])
 def scores_by_type(
     score_type: str,
-    skip: int = 0,
-    limit: int = 50,
+    skip: SkipQuery = 0,
+    limit: LimitQuery = DEFAULT_PAGE_LIMIT,
     db: Session = Depends(get_db),
 ) -> list[RiskScore]:
     return (

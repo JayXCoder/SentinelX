@@ -13,7 +13,7 @@ OpenAPI: `/docs` · ReDoc: `/redoc`
 | GET | `/health/postgres` | PostgreSQL connectivity |
 | GET | `/health/qdrant` | Qdrant connectivity |
 | GET | `/health/sglang` | SGLang server reachability |
-| GET | `/health/bright-data` | Bright Data config status |
+| GET | `/health/bright-data` | Bright Data config (`mode`: `api`, `proxy`, or `off`) |
 
 ## Sources
 
@@ -102,6 +102,43 @@ OpenAPI: `/docs` · ReDoc: `/redoc`
 | `vendor_risk` | Vendors |
 | `executive_summary` | Overview summary text |
 | (all) | Overview metrics, alerts (severity ≥ 6) |
+
+## Realtime (WebSocket)
+
+| Protocol | Path | Description |
+|----------|------|-------------|
+| WS | `/ws` | Live dashboard events (JSON messages) |
+
+**Env (frontend):** `NEXT_PUBLIC_WS_URL=ws://localhost:4000/ws`
+
+The API process runs a background Redis `XREAD` listener on Jay signal streams and Kai Zhe output streams (`correlated_events`, `risk_scores`, `executive_alerts`). Each message is mapped and broadcast to all connected clients.
+
+### Event types
+
+| `type` | Source streams | `data` shape |
+|--------|----------------|--------------|
+| `new_signal` | `cyber_signals`, `gtm_signals`, `financial_signals`, `vendor_risk_signals`, `osint_signals`, `executive_summaries` | Intelligence signal (frontend `IntelligenceSignal`) |
+| `new_correlated_event` | `correlated_events` | Correlated event |
+| `new_risk_score` | `risk_scores` | Risk score |
+| `new_alert` | `executive_alerts` | Alert summary |
+| `system_status_update` | On connect | `{ status, clients }` |
+
+**Example message:**
+
+```json
+{
+  "type": "new_signal",
+  "data": {
+    "id": "uuid",
+    "signal_type": "cyber",
+    "title": "…",
+    "severity": 7,
+    "created_at": "2026-05-29T12:00:00Z"
+  }
+}
+```
+
+Implementation: `app/api/routes/ws.py`, `app/services/realtime_hub.py`, `app/services/realtime_listener.py`.
 
 ## Error conventions
 

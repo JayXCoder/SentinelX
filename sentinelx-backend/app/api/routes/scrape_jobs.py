@@ -3,6 +3,8 @@ from uuid import UUID
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 
+from app.core.pagination import DEFAULT_PAGE_LIMIT, LimitQuery
+from app.core.security import verify_api_key
 from app.db.models.scrape_job import ScrapeJob
 from app.db.models.source import Source
 from app.db.session import get_db
@@ -16,6 +18,7 @@ router = APIRouter(prefix="/scrape-jobs", tags=["scrape-jobs"])
 def create_scrape_job(
     payload: ScrapeJobCreate,
     db: Session = Depends(get_db),
+    _: None = Depends(verify_api_key),
 ) -> ScrapeJob:
     source = db.get(Source, payload.source_id)
     if not source:
@@ -27,7 +30,7 @@ def create_scrape_job(
 @router.get("", response_model=list[ScrapeJobRead])
 def list_scrape_jobs(
     db: Session = Depends(get_db),
-    limit: int = 50,
+    limit: LimitQuery = DEFAULT_PAGE_LIMIT,
     status_filter: str | None = None,
 ) -> list[ScrapeJob]:
     query = db.query(ScrapeJob)
@@ -45,7 +48,11 @@ def get_scrape_job(job_id: UUID, db: Session = Depends(get_db)) -> ScrapeJob:
 
 
 @router.post("/{job_id}/retry", response_model=ScrapeJobRead)
-def retry_scrape_job(job_id: UUID, db: Session = Depends(get_db)) -> ScrapeJob:
+def retry_scrape_job(
+    job_id: UUID,
+    db: Session = Depends(get_db),
+    _: None = Depends(verify_api_key),
+) -> ScrapeJob:
     job = db.get(ScrapeJob, job_id)
     if not job:
         raise HTTPException(status_code=404, detail="Scrape job not found")
@@ -58,7 +65,11 @@ def retry_scrape_job(job_id: UUID, db: Session = Depends(get_db)) -> ScrapeJob:
 
 
 @router.post("/run-source/{source_id}", response_model=ScrapeJobRead)
-def run_source(source_id: UUID, db: Session = Depends(get_db)) -> ScrapeJob:
+def run_source(
+    source_id: UUID,
+    db: Session = Depends(get_db),
+    _: None = Depends(verify_api_key),
+) -> ScrapeJob:
     source = db.get(Source, source_id)
     if not source:
         raise HTTPException(status_code=404, detail="Source not found")

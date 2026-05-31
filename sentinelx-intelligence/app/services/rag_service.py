@@ -48,6 +48,7 @@ class RAGService:
     ) -> RAGMemory:
         vector_id = str(uuid.uuid4())
         qdrant_payload = {
+            "text_chunk": text_chunk,
             "memory_type": memory_type,
             "signal_id": str(signal_id) if signal_id else None,
             "event_id": str(event_id) if event_id else None,
@@ -86,6 +87,8 @@ class RAGService:
         question: str,
         entity_id: uuid.UUID | None = None,
         top_k: int = 5,
+        workspace_context: str | None = None,
+        signal_context: str | None = None,
     ) -> dict[str, Any]:
         filter_payload: dict[str, Any] | None = None
         if entity_id:
@@ -124,10 +127,19 @@ class RAGService:
                 entity_context = f"\nFocused on entity: {entity.name} ({entity.entity_type})"
 
         context_text = "\n\n".join(context_chunks[:10])
+        extra_blocks = []
+        if workspace_context:
+            extra_blocks.append(f"Workspace / company context:\n{workspace_context}")
+        if signal_context:
+            extra_blocks.append(f"Focused intelligence item:\n{signal_context}")
+        extra = "\n\n".join(extra_blocks)
         user_prompt = (
             f"Question: {question}{entity_context}\n\n"
+            f"{extra}\n\n" if extra else ""
+        ) + (
             f"Intelligence Context:\n{context_text}\n\n"
-            f"Answer the question using ONLY the provided context."
+            f"Answer the question using ONLY the provided context. "
+            f"Compare implications for the workspace company vs competitors when relevant."
         )
 
         try:

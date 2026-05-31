@@ -16,6 +16,8 @@ Required coverage:
 | Document | Description |
 |----------|-------------|
 | [architecture.md](architecture.md) | Next.js layout, components, styling |
+| [design-system.md](design-system.md) | Colors, typography, spacing, accessibility |
+| [components.md](components.md) | Reusable component catalog and guidelines |
 | [api-integration.md](api-integration.md) | Backend and intelligence HTTP usage |
 | [workflow.md](workflow.md) | User and data-fetch flows |
 | [routes-and-pages.md](routes-and-pages.md) | Route catalog |

@@ -1,38 +1,52 @@
 # Frontend API integration
 
-Central client: `lib/api-client.ts`. All browser requests use `NEXT_PUBLIC_API_BASE_URL` (default `http://localhost:4000`).
+Central client: `lib/api-client.ts`. Requests are split across two services:
+
+| Service | Env | Default |
+|---------|-----|---------|
+| Jay backend (signals, health) | `NEXT_PUBLIC_API_BASE_URL` | `http://localhost:4000` |
+| Kai Zhe intelligence | `NEXT_PUBLIC_INTELLIGENCE_API_URL` | `http://localhost:4001` |
 
 ## Environment variables
 
 | Variable | Default | Used for |
 |----------|---------|----------|
-| `NEXT_PUBLIC_API_BASE_URL` | `http://localhost:4000` | Jay backend REST |
-| `NEXT_PUBLIC_API_URL` | same as above | Alias fallback |
-| `NEXT_PUBLIC_INTELLIGENCE_API_URL` | `http://localhost:4001` | Future Kai Zhe service |
-| `NEXT_PUBLIC_WS_URL` | `ws://localhost:4000/ws` | Realtime (not live) |
+| `NEXT_PUBLIC_API_BASE_URL` | `http://localhost:4000` | `/agents/signals`, `/health` |
+| `NEXT_PUBLIC_INTELLIGENCE_API_URL` | `http://localhost:4001` | Correlation, risk, RAG, analytics, graph |
+| `NEXT_PUBLIC_WS_URL` | `ws://localhost:4000/ws` | Backend realtime WebSocket |
 
-## Implemented calls (backend :4000)
+Docker Compose passes both URLs via `x-frontend-build-args`.
 
-| `apiClient` method | HTTP | Path | Notes |
-|--------------------|------|------|-------|
-| `getHealth` | GET | `/health` | Connectivity check |
-| `getSignals` | GET | `/agents/signals?limit=&signal_type=` | Core data |
-| `getDashboardOverview` | — | aggregates `getSignals(100)` | Client-side metrics |
-| `getCyberSignals` | GET | `/agents/signals?signal_type=cyber` | Threat feed |
-| `getGtmSignals` | GET | `/agents/signals?signal_type=gtm` | Competitors |
-| `getVendorSignals` | GET | `/agents/signals?signal_type=vendor_risk` | Vendor list |
-| `getVendorSummary` | — | maps vendor signals to `RiskScore` | Vendors page |
-| `getAlerts` | — | filters severity ≥ 6 | Alerts page |
+## Backend (:4000)
 
-## Planned / graceful fallback
+| `apiClient` method | HTTP | Path |
+|--------------------|------|------|
+| `getHealth` | GET | `/health` |
+| `getSignals` | GET | `/agents/signals?limit=&signal_type=` |
+| `getCyberSignals` | GET | `signal_type=cyber` |
+| `getGtmSignals` | GET | `signal_type=gtm` |
+| `getVendorSignals` | GET | `signal_type=vendor_risk` |
+| `getAlerts` | — | Derived from signals (severity ≥ 6) |
 
-| Method | Intended path | Fallback when 404/502 |
-|--------|---------------|------------------------|
-| `getCorrelatedEvents` | `GET /correlation/events` | `[]` |
-| `getRiskScores` | `GET /risk-scores` | Maps from signals |
-| `askRagQuestion` | `POST /rag/ask` | User-facing error message |
+## Intelligence (:4001)
 
-Intelligence base URL will be wired when `sentinelx-intelligence` is deployed; until then calls hit backend paths and fail gracefully.
+| Method | HTTP | Path | Fallback |
+|--------|------|------|----------|
+| `getDashboardOverview` | GET | `/analytics/overview` + signals | Signal-only aggregation |
+| `getCorrelatedEvents` | GET | `/correlation/events` | `[]` |
+| `getRiskScores` | GET | `/risk-scores` | Map from signals |
+| `getRiskScoresByType` | GET | `/risk-scores/type/{type}` | Signal map |
+| `getTopRisks` | GET | `/analytics/top-risks` | Top mapped scores |
+| `getVendorSummary` | GET | `/analytics/vendor-risk-summary` + vendor scores | Vendor signals |
+| `askRagQuestion` | POST | `/rag/ask` `{ question }` | Error surfaced in UI |
+| `getCyberRiskSummary` | GET | `/analytics/cyber-risk-summary` | `{}` |
+| `getMarketMovementSummary` | GET | `/analytics/market-movement-summary` | `{}` |
+| `getEntityTimeline` | GET | `/graph/timeline/{entity_id}` | — |
+| `getGraphEntities` | GET | `/graph/entities` | — |
+
+## Realtime
+
+`lib/websocket-client.ts` connects to `NEXT_PUBLIC_WS_URL` (`WS /ws` on the Jay backend). The backend tails shared Redis streams and broadcasts `new_signal`, `new_correlated_event`, `new_risk_score`, and `new_alert` events. If the socket does not open within 2.5s, `useRealtimeEvents` falls back to **30s polling**. `RealtimeIndicator` shows `connected` | `polling` | `offline`.
 
 ## Request flow
 
@@ -40,35 +54,29 @@ Intelligence base URL will be wired when `sentinelx-intelligence` is deployed; u
 sequenceDiagram
   participant Page as Dashboard page
   participant AC as apiClient
-  participant API as :4000 FastAPI
+  participant BE as Backend :4000
+  participant IN as Intelligence :4001
 
-  Page->>AC: getCyberSignals()
-  AC->>API: GET /agents/signals?signal_type=cyber&limit=50
-  alt 200 OK
-    API-->>AC: ApiSignal[]
-    AC-->>Page: IntelligenceSignal[]
-  else 4xx/5xx
-    API-->>AC: error body
-    AC-->>Page: throw ApiError
+  Page->>AC: getDashboardOverview()
+  par Analytics
+    AC->>IN: GET /analytics/overview
+  and Signals
+    AC->>BE: GET /agents/signals
   end
+  AC-->>Page: DashboardOverviewDto
 ```
 
 ## DTO mapping
 
-`ApiSignal` → `IntelligenceSignal` (`types/sentinelx.ts`) via `mapSignal()`.
+- `ApiSignal` → `IntelligenceSignal` via `mapSignal()`
+- `ApiRiskScore` → `RiskScore` via `mapRiskScore()`
+- `ApiCorrelatedEvent` → `CorrelatedEvent` via `mapCorrelatedEvent()`
 
-Severity → risk level:
-
-| severity | `risk_level` |
-|----------|--------------|
-| ≥ 8 | critical |
-| ≥ 6 | high |
-| ≥ 4 | medium |
-| else | low |
+Client-side filters: `lib/signal-filters.ts` · Pagination: `lib/pagination.ts`.
 
 ## Adding a new integration
 
-1. Add backend route (Jay) and document in `sentinelx-backend/docs/api-reference.md`.
-2. Add method to `api-client.ts` and types.
+1. Confirm route in `sentinelx-intelligence/docs/api-reference.md` or backend docs.
+2. Add typed mapper + method on `apiClient`.
 3. Document here and in [routes-and-pages.md](routes-and-pages.md).
-4. Handle loading/error UI on the page.
+4. Wire hook + loading/error/empty states on the page.

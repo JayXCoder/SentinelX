@@ -1,10 +1,7 @@
-# SentinelX — full stack (one command)
+# SentinelX — ChamPeng full stack
 #   docker compose up -d --build
-# Optional profiles:
-#   --profile ai            SGLang / Qwen (requires NVIDIA GPU)
-#   --profile intelligence  Intelligence API + Celery workers
-#   --profile frontend      Next.js dashboard
-#   --profile full          ai + intelligence + frontend
+#   docker compose --profile ai up -d --build   # + SGLang / Qwen/Qwen3.5-2B (NVIDIA GPU)
+#   ./scripts/bootstrap-champeng.sh             # seed sources + demo intelligence
 
 name: sentinelx
 
@@ -22,10 +19,15 @@ x-backend-env: &backend-env
   SGLANG_BASE_URL: ${SGLANG_BASE_URL:-http://sglang_qwen:30000}
   SGLANG_MODEL: ${SGLANG_MODEL:-Qwen/Qwen3.5-2B}
   BRIGHT_DATA_ENABLED: ${BRIGHT_DATA_ENABLED:-false}
+  BRIGHT_DATA_API_KEY: ${BRIGHT_DATA_API_KEY:-}
+  BRIGHT_DATA_ZONE: ${BRIGHT_DATA_ZONE:-sentinelx}
   BRIGHT_DATA_USERNAME: ${BRIGHT_DATA_USERNAME:-}
   BRIGHT_DATA_PASSWORD: ${BRIGHT_DATA_PASSWORD:-}
   HF_TOKEN: ${HF_TOKEN:-}
   HUGGING_FACE_HUB_TOKEN: ${HF_TOKEN:-}
+  SENTINELX_INTEL_URL: http://intelligence_api:4001
+  API_KEY: ${API_KEY:-}
+  RATE_LIMIT_PER_MINUTE: ${RATE_LIMIT_PER_MINUTE:-60}
 
 x-intel-env: &intel-env
   DATABASE_URL: ${DATABASE_URL:-postgresql+psycopg2://sentinelx:sentinelx@postgres:5432/sentinelx}
@@ -46,6 +48,8 @@ x-intel-env: &intel-env
   CONSUMER_NAME: ${CONSUMER_NAME:-intel_worker_1}
   CORRELATION_TIME_WINDOW_HOURS: ${CORRELATION_TIME_WINDOW_HOURS:-72}
   CORRELATION_MIN_SIGNALS: ${CORRELATION_MIN_SIGNALS:-2}
+  API_KEY: ${API_KEY:-}
+  RATE_LIMIT_PER_MINUTE: ${RATE_LIMIT_PER_MINUTE:-60}
 
 x-frontend-build-args: &frontend-build-args
   NEXT_PUBLIC_API_BASE_URL: ${NEXT_PUBLIC_API_BASE_URL:-http://localhost:4000}
@@ -93,13 +97,17 @@ services:
       - sentinelx
     ports:
       - "${QDRANT_PORT:-4633}:6333"
+    ulimits:
+      nofile:
+        soft: 65536
+        hard: 65536
     volumes:
       - qdrant_data:/qdrant/storage
 
   sglang_qwen:
     image: lmsysorg/sglang:latest
     restart: unless-stopped
-    profiles: ["ai"]
+    profiles: ["ai", "full"]
     networks:
       - sentinelx
     environment:
@@ -184,11 +192,10 @@ services:
         condition: service_healthy
 
   intelligence_api:
-    profiles: ["intelligence", "full"]
     networks:
       - sentinelx
     build:
-      context: ./sentinelx-frontend
+      context: ./sentinelx-intelligence
       dockerfile: Dockerfile
     restart: unless-stopped
     ports:
@@ -212,7 +219,6 @@ services:
       start_period: 30s
 
   intel_celery_worker:
-    profiles: ["intelligence", "full"]
     networks:
       - sentinelx
     build:
@@ -233,7 +239,6 @@ services:
         condition: service_healthy
 
   intel_celery_beat:
-    profiles: ["intelligence", "full"]
     networks:
       - sentinelx
     build:
@@ -250,11 +255,10 @@ services:
         condition: service_healthy
 
   frontend:
-    profiles: ["frontend", "full"]
     networks:
       - sentinelx
     build:
-      context: ./sentinelx-intelligence
+      context: ./sentinelx-frontend
       dockerfile: Dockerfile
       args:
         <<: *frontend-build-args
@@ -263,8 +267,13 @@ services:
       - "${FRONTEND_PORT:-4002}:3000"
     environment:
       <<: *frontend-build-args
+      SENTINELX_API_KEY: ${API_KEY:-}
+      API_BACKEND_URL: http://api:4000
+      API_INTELLIGENCE_URL: http://intelligence_api:4001
     depends_on:
       api:
+        condition: service_healthy
+      intelligence_api:
         condition: service_healthy
     healthcheck:
       test:

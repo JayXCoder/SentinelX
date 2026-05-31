@@ -96,15 +96,23 @@ def correlate_signals_task(self) -> dict:
         svc = CorrelationService()
         events = svc.run_all(db)
 
+        from app.workers.risk_worker import calculate_risk_score_task
+
         for event in events:
             redis_svc.publish("correlated_events", {
                 "event_id": str(event.id),
                 "event_type": event.event_type,
                 "title": event.title,
+                "summary": event.summary,
                 "severity": event.severity,
                 "confidence": event.confidence,
                 "signal_ids": event.signal_ids,
+                "involved_entities": event.involved_entities or [],
+                "correlation_reason": event.correlation_reason,
+                "first_seen": event.first_seen.isoformat() if event.first_seen else None,
+                "last_seen": event.last_seen.isoformat() if event.last_seen else None,
             })
+            calculate_risk_score_task.delay(str(event.id))
 
         logger.info(
             "Correlation task complete",

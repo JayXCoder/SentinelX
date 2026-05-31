@@ -3,6 +3,7 @@ from uuid import UUID
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 
+from app.core.security import verify_api_key
 from app.db.models.source import Source
 from app.db.session import get_db
 from app.schemas.source import SourceCreate, SourceRead, SourceUpdate
@@ -11,7 +12,11 @@ router = APIRouter(prefix="/sources", tags=["sources"])
 
 
 @router.post("", response_model=SourceRead, status_code=status.HTTP_201_CREATED)
-def create_source(payload: SourceCreate, db: Session = Depends(get_db)) -> Source:
+def create_source(
+    payload: SourceCreate,
+    db: Session = Depends(get_db),
+    _: None = Depends(verify_api_key),
+) -> Source:
     source = Source(**payload.model_dump())
     db.add(source)
     db.commit()
@@ -43,6 +48,7 @@ def update_source(
     source_id: UUID,
     payload: SourceUpdate,
     db: Session = Depends(get_db),
+    _: None = Depends(verify_api_key),
 ) -> Source:
     source = db.get(Source, source_id)
     if not source:
@@ -55,7 +61,11 @@ def update_source(
 
 
 @router.delete("/{source_id}", status_code=status.HTTP_204_NO_CONTENT)
-def delete_source(source_id: UUID, db: Session = Depends(get_db)) -> None:
+def delete_source(
+    source_id: UUID,
+    db: Session = Depends(get_db),
+    _: None = Depends(verify_api_key),
+) -> None:
     source = db.get(Source, source_id)
     if not source:
         raise HTTPException(status_code=404, detail="Source not found")

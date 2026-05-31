@@ -17,8 +17,9 @@ const sourceSerif = Source_Serif_4({
 });
 
 export const metadata: Metadata = {
-  title: 'SentinelX — Enterprise intelligence',
-  description: 'AI agents monitoring intelligence, risk, and opportunity 24/7.',
+  title: 'ChamPeng SentinelX — Competitive intelligence',
+  description:
+    'Monitor OpenAI, Anthropic, Cursor, and Antigravity for ChamPeng’s coding-agent IDE and multi-model platform.',
 };
 
 const themeInitScript = `(function(){try{var t=localStorage.getItem('sentinelx-theme');var d=t==='dark'||(!t&&matchMedia('(prefers-color-scheme: dark)').matches);document.documentElement.classList.add(d?'dark':'light');}catch(e){document.documentElement.classList.add('light');}})();`;

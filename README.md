@@ -1,67 +1,51 @@
-# SentinelX
+# SentinelX — ChamPeng
 
-AI-powered enterprise intelligence platform. See [docs/sentinelx_master.md](docs/sentinelx_master.md).
+AI-powered competitive intelligence for **ChamPeng** (coding-agent IDE + multi-model platform). Monitors **OpenAI**, **Anthropic**, **Cursor**, and **Antigravity** with **Qwen/Qwen3.5-2B** via SGLang.
 
-## Documentation policy
+See [docs/champeng-profile.md](docs/champeng-profile.md) and [docs/sentinelx_master.md](docs/sentinelx_master.md).
 
-**Every package must ship full documentation** in its `docs/` folder: architecture, API calls, data models, and Mermaid workflows. Treat docs as part of the feature — update them in the same change as code.
-
-| Location | Index |
-|----------|-------|
-| Platform hub | [docs/README.md](docs/README.md) |
-| Platform architecture & ports | [docs/platform-architecture.md](docs/platform-architecture.md) |
-| End-to-end workflows (Mermaid) | [docs/platform-workflow.md](docs/platform-workflow.md) |
-| Backend | [sentinelx-backend/docs/README.md](sentinelx-backend/docs/README.md) |
-| Frontend | [sentinelx-frontend/docs/README.md](sentinelx-frontend/docs/README.md) |
-| Intelligence | [sentinelx-intelligence/docs/README.md](sentinelx-intelligence/docs/README.md) |
-
-## Monorepo layout
-
-| Path | Owner | Status |
-|------|-------|--------|
-| [sentinelx-backend/](sentinelx-backend/) | Jay | Implemented |
-| [sentinelx-intelligence/](sentinelx-intelligence/) | Kai Zhe | Scaffold |
-| [sentinelx-frontend/](sentinelx-frontend/) | Raymond + Geng Xin | Implemented |
-
-## Quick start — full stack (one command)
-
-From the repo root:
+## One-command ship
 
 ```bash
 cp .env.example .env
-docker compose up -d --build
+# Set HF_TOKEN, BRIGHT_DATA_API_KEY, BRIGHT_DATA_ZONE in .env
+chmod +x scripts/bootstrap-champeng.sh
+./scripts/bootstrap-champeng.sh
 ```
 
 | Service | URL |
 |---------|-----|
-| Frontend | http://localhost:4002 |
-| Backend API + docs | http://localhost:4000/docs |
-| PostgreSQL | localhost:4543 |
-| Redis | localhost:4637 |
-| Qdrant | localhost:4633 |
+| **Dashboard** | http://localhost:4002 |
+| Backend API | http://localhost:4000/docs |
+| Intelligence API | http://localhost:4001/docs |
+| WebSocket | ws://localhost:4000/ws |
 
-Stop everything: `docker compose down`
-
-### Optional profiles
-
-- GPU + SGLang: `docker compose --profile ai up -d --build`
-- Intelligence API (when implemented): `docker compose --profile intelligence up -d --build`
-
-### Local frontend dev
+### GPU + Qwen inference
 
 ```bash
-cd sentinelx-frontend
-cp .env.example .env.local
-npm install
-npm run dev
+docker compose --profile ai up -d sglang_qwen
 ```
 
-Requires the backend API at http://localhost:4000.
+Requires NVIDIA GPU + `HF_TOKEN` in `.env`.
 
-## Checklist
+## Monorepo
 
-[docs/master-checklist.md](docs/master-checklist.md)
+| Path | Role |
+|------|------|
+| [sentinelx-backend/](sentinelx-backend/) | Ingestion, Bright Data, agents, WebSocket |
+| [sentinelx-intelligence/](sentinelx-intelligence/) | Correlation, risk scores, RAG, graph |
+| [sentinelx-frontend/](sentinelx-frontend/) | ChamPeng dashboard + marketing |
 
-## CI
+## Documentation
 
-[.github/workflows/ci.yml](.github/workflows/ci.yml) — backend lint/test, frontend build, Docker images, compose validation.
+| Location | Index |
+|----------|-------|
+| [docs/master-checklist.md](docs/master-checklist.md) | MVP checklist |
+| [docs/champeng-profile.md](docs/champeng-profile.md) | Company + competitors |
+| [docs/platform-architecture.md](docs/platform-architecture.md) | Ports & services |
+
+## Stop stack
+
+```bash
+docker compose down
+```

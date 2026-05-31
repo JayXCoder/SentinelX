@@ -8,8 +8,10 @@ import { LoadingState } from '@/components/dashboard/loading-state';
 import { MetricCard } from '@/components/dashboard/metric-card';
 import { RiskChart } from '@/components/dashboard/risk-chart';
 import { TopEntitiesTable } from '@/components/dashboard/top-entities-table';
+import { RealtimeIndicator } from '@/components/dashboard/realtime-indicator';
 import { useDashboardOverview } from '@/hooks/use-dashboard-overview';
 import { useRealtimeEvents } from '@/hooks/use-realtime-events';
+import { apiClient } from '@/lib/api-client';
 
 export default function DashboardPage() {
   useRealtimeEvents();
@@ -46,9 +48,7 @@ export default function DashboardPage() {
                     'A premium command center for live threat signals, vendor posture, correlated events, and AI-driven intelligence summaries.'}
                 </p>
               </div>
-              <span className="w-fit shrink-0 rounded-full border border-emerald-500/25 bg-emerald-500/15 px-3 py-1 text-xs font-medium text-emerald-800 dark:text-emerald-200">
-                Backend connected
-              </span>
+              <RealtimeIndicator />
             </div>
           </div>
 
@@ -78,12 +78,18 @@ export default function DashboardPage() {
             <p className="text-sm uppercase tracking-[0.3em] text-muted">System status</p>
             <div className="mt-4 space-y-3 text-sm text-muted">
               <div className="flex flex-wrap items-center justify-between gap-2 rounded-2xl border border-border bg-background px-4 py-3">
-                <span>API</span>
-                <span className="font-medium text-emerald-700 dark:text-emerald-300">localhost:4000</span>
+                <span>Backend API</span>
+                <span className="font-medium text-emerald-700 dark:text-emerald-300">{apiClient.getBackendUrl()}</span>
+              </div>
+              <div className="flex flex-wrap items-center justify-between gap-2 rounded-2xl border border-border bg-background px-4 py-3">
+                <span>Intelligence API</span>
+                <span className="font-medium text-emerald-700 dark:text-emerald-300">
+                  {apiClient.getIntelligenceUrl()}
+                </span>
               </div>
               <div className="flex flex-wrap items-center justify-between gap-2 rounded-2xl border border-border bg-background px-4 py-3">
                 <span>Realtime</span>
-                <span className="font-medium text-accent">When WS available</span>
+                <RealtimeIndicator />
               </div>
               <div className="flex flex-wrap items-center justify-between gap-2 rounded-2xl border border-border bg-background px-4 py-3">
                 <span>Coverage</span>
