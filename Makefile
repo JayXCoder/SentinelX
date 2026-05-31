@@ -1,7 +1,13 @@
-.PHONY: up bootstrap lint test test-backend test-intel test-frontend compose-prod
+.PHONY: up bootstrap lint test test-backend test-intel test-frontend compose-prod docker-build docker-rebuild
 
 up:
 	docker compose up -d --build
+
+docker-build:
+	docker compose build api frontend intelligence_api
+
+docker-rebuild:
+	docker compose build --no-cache api frontend intelligence_api
 
 bootstrap:
 	./scripts/bootstrap-champeng.sh

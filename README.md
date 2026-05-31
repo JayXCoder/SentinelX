@@ -44,6 +44,14 @@ Requires NVIDIA GPU + `HF_TOKEN` in `.env`.
 | [docs/champeng-profile.md](docs/champeng-profile.md) | Company + competitors |
 | [docs/platform-architecture.md](docs/platform-architecture.md) | Ports & services |
 
+## Rebuild after code changes
+
+```bash
+docker compose up -d --build
+# or rebuild app images only:
+make docker-build
+```
+
 ## Stop stack
 
 ```bash

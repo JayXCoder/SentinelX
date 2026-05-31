@@ -11,9 +11,11 @@ RUN pip install --no-cache-dir -r requirements.txt
 
 COPY . .
 
+RUN chmod +x /app/scripts/docker-entrypoint.sh
+
 ENV PYTHONPATH=/app
 ENV PYTHONUNBUFFERED=1
 
 EXPOSE 4001
 
-CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "4001"]
+ENTRYPOINT ["/app/scripts/docker-entrypoint.sh"]

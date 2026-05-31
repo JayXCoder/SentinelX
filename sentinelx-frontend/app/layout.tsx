@@ -20,6 +20,10 @@ export const metadata: Metadata = {
   title: 'ChamPeng SentinelX — Competitive intelligence',
   description:
     'Monitor OpenAI, Anthropic, Cursor, and Antigravity for ChamPeng’s coding-agent IDE and multi-model platform.',
+  icons: {
+    icon: [{ url: '/icon.svg', type: 'image/svg+xml' }],
+    apple: [{ url: '/apple-icon.svg', type: 'image/svg+xml' }],
+  },
 };
 
 const themeInitScript = `(function(){try{var t=localStorage.getItem('sentinelx-theme');var d=t==='dark'||(!t&&matchMedia('(prefers-color-scheme: dark)').matches);document.documentElement.classList.add(d?'dark':'light');}catch(e){document.documentElement.classList.add('light');}})();`;
