@@ -1,7 +1,6 @@
-from fastapi import APIRouter, Query, WebSocket, WebSocketDisconnect
-
 from app.core.config import get_settings
 from app.services.realtime_hub import get_realtime_hub
+from fastapi import APIRouter, Query, WebSocket, WebSocketDisconnect
 
 router = APIRouter(tags=["realtime"])
 

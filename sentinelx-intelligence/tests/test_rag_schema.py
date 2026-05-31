@@ -1,7 +1,6 @@
 import pytest
-from pydantic import ValidationError
-
 from app.schemas.rag import RAGAskRequest, RAGQueryRequest
+from pydantic import ValidationError
 
 
 def test_rag_ask_top_k_bounds():

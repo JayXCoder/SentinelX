@@ -1,11 +1,11 @@
 from datetime import datetime
-from enum import Enum
+from enum import StrEnum
 from uuid import UUID
 
 from pydantic import BaseModel, Field
 
 
-class SignalType(str, Enum):
+class SignalType(StrEnum):
     cyber = "cyber"
     gtm = "gtm"
     financial = "financial"

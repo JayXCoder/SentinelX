@@ -54,7 +54,10 @@ class RedisStreamService:
                 logger.info("Created consumer group", extra={"stream": name, "group": self._group})
             except redis.exceptions.ResponseError as exc:
                 if "BUSYGROUP" not in str(exc):
-                    logger.warning("Consumer group error", extra={"stream": name, "error": str(exc)})
+                    logger.warning(
+                        "Consumer group error",
+                        extra={"stream": name, "error": str(exc)},
+                    )
 
     def publish(self, stream: str, payload: dict[str, Any]) -> str:
         data = {

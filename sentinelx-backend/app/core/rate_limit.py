@@ -2,9 +2,8 @@ import time
 from collections.abc import Callable
 
 import redis
-from fastapi import HTTPException, Request, status
-
 from app.core.config import get_settings
+from fastapi import HTTPException, Request, status
 
 EXPENSIVE_PATH_PREFIXES = (
     "/rag/ask",

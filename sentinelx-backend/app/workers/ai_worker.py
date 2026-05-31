@@ -22,6 +22,6 @@ def process_parsed_record_task(
         }
     except Exception as exc:
         db.rollback()
-        raise self.retry(exc=exc, countdown=45)
+        raise self.retry(exc=exc, countdown=45) from exc
     finally:
         db.close()

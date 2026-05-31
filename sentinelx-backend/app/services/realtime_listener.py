@@ -126,7 +126,10 @@ def stream_message_to_event(stream: str, fields: dict[str, str]) -> dict[str, An
         return {
             "type": "new_alert",
             "data": {
-                "title": f"{payload.get('entity_name', 'Entity')} — {payload.get('risk_level', 'alert')}",
+                "title": (
+                    f"{payload.get('entity_name', 'Entity')}"
+                    f" — {payload.get('risk_level', 'alert')}"
+                ),
                 "severity": payload.get("risk_level", "high"),
                 "alert_type": payload.get("alert_type", "risk_score"),
                 "explanation": payload.get("explanation", ""),

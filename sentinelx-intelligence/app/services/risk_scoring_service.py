@@ -1,5 +1,5 @@
 import uuid
-from datetime import timezone
+from datetime import UTC
 from typing import Any
 
 from sqlalchemy.orm import Session
@@ -49,7 +49,7 @@ def _signals_for_entity(db: Session, entity: Entity) -> list[IntelSignal]:
 def _signal_to_dict(sig: IntelSignal) -> dict[str, Any]:
     ts = sig.timestamp or sig.created_at
     if ts and ts.tzinfo is None:
-        ts = ts.replace(tzinfo=timezone.utc)
+        ts = ts.replace(tzinfo=UTC)
     return {
         "severity": sig.severity,
         "confidence": sig.confidence,

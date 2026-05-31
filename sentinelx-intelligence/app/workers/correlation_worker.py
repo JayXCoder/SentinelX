@@ -71,7 +71,11 @@ def _store_signal(db, message: dict) -> IntelSignal | None:
     return sig
 
 
-@celery_app.task(name="app.workers.correlation_worker.correlate_signals_task", bind=True, max_retries=3)
+@celery_app.task(
+    name="app.workers.correlation_worker.correlate_signals_task",
+    bind=True,
+    max_retries=3,
+)
 def correlate_signals_task(self) -> dict:
     redis_svc = RedisStreamService()
     db = SessionLocal()
@@ -123,6 +127,6 @@ def correlate_signals_task(self) -> dict:
     except Exception as exc:
         db.rollback()
         logger.error("Correlation task failed", extra={"error": str(exc)})
-        raise self.retry(exc=exc, countdown=60)
+        raise self.retry(exc=exc, countdown=60) from exc
     finally:
         db.close()

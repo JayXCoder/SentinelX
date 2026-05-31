@@ -50,13 +50,24 @@ export async function proxyToUpstream(
   });
 }
 
-export function buildWebSocketUrl(): string {
+function resolvePublicWebSocketBase(): string {
+  const explicit =
+    process.env.PUBLIC_WS_URL ??
+    process.env.NEXT_PUBLIC_WS_URL ??
+    '';
+  if (explicit) {
+    const trimmed = explicit.replace(/\/ws\/?$/, '').replace(/\/$/, '');
+    return trimmed.replace(/^http/i, 'ws');
+  }
   const base =
     process.env.API_BACKEND_URL ??
-    process.env.NEXT_PUBLIC_WS_URL?.replace(/\/ws$/, '') ??
     process.env.NEXT_PUBLIC_API_BASE_URL ??
     'http://localhost:4000';
-  const wsBase = base.replace(/^http/, 'ws').replace(/\/$/, '');
+  return base.replace(/^http/i, 'ws').replace(/\/$/, '');
+}
+
+export function buildWebSocketUrl(): string {
+  const wsBase = resolvePublicWebSocketBase();
   const key = process.env.SENTINELX_API_KEY ?? process.env.API_KEY;
   const url = `${wsBase}/ws`;
   if (!key) {

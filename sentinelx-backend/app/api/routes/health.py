@@ -1,14 +1,13 @@
-from fastapi import APIRouter, Depends
-from sqlalchemy import text
-from sqlalchemy.orm import Session
-from starlette.responses import Response
-
 from app.core.metrics import metrics_response
 from app.db.session import get_db
 from app.services.bright_data_service import BrightDataService
 from app.services.embedding_service import EmbeddingService
 from app.services.redis_stream_service import get_redis_stream_service
 from app.services.sglang_service import SGLangService
+from fastapi import APIRouter, Depends
+from sqlalchemy import text
+from sqlalchemy.orm import Session
+from starlette.responses import Response
 
 router = APIRouter(tags=["health"])
 

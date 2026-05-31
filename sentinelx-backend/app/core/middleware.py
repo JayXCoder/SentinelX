@@ -1,9 +1,8 @@
+from app.core.metrics import HTTP_REQUESTS
+from app.core.rate_limit import check_rate_limit
 from starlette.middleware.base import BaseHTTPMiddleware
 from starlette.requests import Request
 from starlette.responses import Response
-
-from app.core.metrics import HTTP_REQUESTS
-from app.core.rate_limit import check_rate_limit
 
 
 class ObservabilityMiddleware(BaseHTTPMiddleware):

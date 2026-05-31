@@ -1,13 +1,12 @@
 from uuid import UUID
 
-from fastapi import APIRouter, Depends, HTTPException
-from sqlalchemy.orm import Session
-
 from app.core.pagination import DEFAULT_PAGE_LIMIT, LimitQuery
 from app.db.models.parsed_record import ParsedRecord
 from app.db.models.raw_record import RawRecord
 from app.db.session import get_db
 from app.schemas.record import ParsedRecordRead, RawRecordRead
+from fastapi import APIRouter, Depends, HTTPException
+from sqlalchemy.orm import Session
 
 router = APIRouter(prefix="/records", tags=["records"])
 

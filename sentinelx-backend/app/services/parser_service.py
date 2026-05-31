@@ -1,11 +1,10 @@
 import re
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from typing import Any
 
+from app.core.logging import get_logger
 from bs4 import BeautifulSoup
 from langdetect import LangDetectException, detect
-
-from app.core.logging import get_logger
 
 logger = get_logger(__name__)
 
@@ -104,4 +103,4 @@ class ParserService:
                 )
             except ValueError:
                 pass
-        return datetime.now(timezone.utc)
+        return datetime.now(UTC)

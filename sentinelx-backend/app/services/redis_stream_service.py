@@ -2,7 +2,6 @@ import json
 from typing import Any
 
 import redis
-
 from app.core.config import get_settings
 from app.core.logging import get_logger
 
@@ -50,7 +49,10 @@ class RedisStreamService:
 
     def publish(self, stream: str, payload: dict[str, Any]) -> str:
         self.ensure_streams()
-        data = {k: json.dumps(v) if isinstance(v, (dict, list)) else str(v) for k, v in payload.items()}
+        data = {
+            k: json.dumps(v) if isinstance(v, (dict, list)) else str(v)
+            for k, v in payload.items()
+        }
         message_id = self._client.xadd(stream, data, maxlen=self._max_len)
         logger.info("Published to stream", extra={"stream": stream, "id": message_id})
         return message_id

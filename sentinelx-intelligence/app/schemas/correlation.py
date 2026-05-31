@@ -1,11 +1,11 @@
 from datetime import datetime
-from enum import Enum
+from enum import StrEnum
 from uuid import UUID
 
 from pydantic import BaseModel, Field
 
 
-class EventType(str, Enum):
+class EventType(StrEnum):
     cyber_incident = "cyber_incident"
     vendor_risk_event = "vendor_risk_event"
     market_opportunity = "market_opportunity"

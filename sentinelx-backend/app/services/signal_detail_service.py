@@ -1,8 +1,5 @@
 from uuid import UUID
 
-from sqlalchemy import or_
-from sqlalchemy.orm import Session, joinedload
-
 from app.db.models.human_note import HumanNote
 from app.db.models.intelligence_signal import IntelligenceSignal
 from app.db.models.parsed_record import ParsedRecord
@@ -14,6 +11,8 @@ from app.schemas.signal_detail import (
     SourceProvenance,
     StoryEvent,
 )
+from sqlalchemy import or_
+from sqlalchemy.orm import Session, joinedload
 
 
 class SignalDetailService:

@@ -1,4 +1,4 @@
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from uuid import UUID
 
 from app.db.models.scrape_job import ScrapeJob
@@ -34,7 +34,7 @@ def scrape_source_task(self, job_id: str) -> dict:
                     "scrape_jobs",
                     {"job_id": job_id, "status": "retrying", "error": str(exc)},
                 )
-                raise self.retry(exc=exc, countdown=30 * job.retry_count)
+                raise self.retry(exc=exc, countdown=30 * job.retry_count) from exc
             job.status = "failed"
             job.error_message = str(exc)
             db.commit()
@@ -70,7 +70,7 @@ def create_and_enqueue_job(source_id: UUID) -> ScrapeJob:
     db = SessionLocal()
     streams = get_redis_stream_service()
     try:
-        job = ScrapeJob(source_id=source_id, status="pending", created_at=datetime.now(timezone.utc))
+        job = ScrapeJob(source_id=source_id, status="pending", created_at=datetime.now(UTC))
         db.add(job)
         db.commit()
         db.refresh(job)

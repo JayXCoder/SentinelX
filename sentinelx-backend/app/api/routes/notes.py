@@ -1,12 +1,11 @@
 from uuid import UUID
 
-from fastapi import APIRouter, Depends, HTTPException, status
-from sqlalchemy.orm import Session
-
 from app.core.security import verify_api_key
 from app.db.models.human_note import HumanNote
 from app.db.session import get_db
 from app.schemas.workspace import HumanNoteCreate, HumanNoteRead
+from fastapi import APIRouter, Depends, HTTPException, status
+from sqlalchemy.orm import Session
 
 router = APIRouter(prefix="/notes", tags=["notes"])
 

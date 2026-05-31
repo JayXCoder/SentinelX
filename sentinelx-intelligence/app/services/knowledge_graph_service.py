@@ -1,5 +1,5 @@
 import uuid
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from typing import Any
 
 from sqlalchemy.orm import Session
@@ -34,7 +34,7 @@ def _infer_entity_type(name: str, ent_dict: dict[str, Any] | None) -> str:
 
 
 def _now_utc() -> datetime:
-    return datetime.now(timezone.utc)
+    return datetime.now(UTC)
 
 
 class KnowledgeGraphService:
@@ -159,7 +159,7 @@ class KnowledgeGraphService:
         for sig in signals:
             ts = sig.timestamp or sig.created_at
             if ts.tzinfo is None:
-                ts = ts.replace(tzinfo=timezone.utc)
+                ts = ts.replace(tzinfo=UTC)
             timeline.append({
                 "timestamp": ts.isoformat(),
                 "event_type": sig.signal_type,
@@ -172,7 +172,7 @@ class KnowledgeGraphService:
         for evt in events:
             ts = evt.first_seen or evt.created_at
             if ts.tzinfo is None:
-                ts = ts.replace(tzinfo=timezone.utc)
+                ts = ts.replace(tzinfo=UTC)
             timeline.append({
                 "timestamp": ts.isoformat(),
                 "event_type": evt.event_type,
@@ -201,7 +201,8 @@ class KnowledgeGraphService:
                     continue
                 if not name:
                     continue
-                entity = self.upsert_entity(db, name, ent_dict=ent if isinstance(ent, dict) else None)
+                ent_dict = ent if isinstance(ent, dict) else None
+                entity = self.upsert_entity(db, name, ent_dict=ent_dict)
                 sig_entities.append(entity)
                 entities_created += 1
 
@@ -218,4 +219,7 @@ class KnowledgeGraphService:
                     relationships_created += 1
 
         db.commit()
-        return {"entities_created": entities_created, "relationships_created": relationships_created}
+        return {
+            "entities_created": entities_created,
+            "relationships_created": relationships_created,
+        }

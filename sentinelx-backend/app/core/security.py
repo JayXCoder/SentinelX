@@ -1,8 +1,7 @@
 """API key authentication — optional when API_KEY env is unset (local dev)."""
 
-from fastapi import Header, HTTPException, status
-
 from app.core.config import get_settings
+from fastapi import Header, HTTPException, status
 
 
 def verify_api_key(x_api_key: str | None = Header(default=None, alias="X-API-Key")) -> None:

@@ -1,7 +1,3 @@
-from fastapi import APIRouter, Depends
-from sqlalchemy import func
-from sqlalchemy.orm import Session
-
 from app.db.models.intelligence_signal import IntelligenceSignal
 from app.db.models.parsed_record import ParsedRecord
 from app.db.models.raw_record import RawRecord
@@ -9,6 +5,9 @@ from app.db.models.scrape_job import ScrapeJob
 from app.db.session import get_db
 from app.services.redis_stream_service import get_redis_stream_service
 from app.workers.celery_app import celery_app
+from fastapi import APIRouter, Depends
+from sqlalchemy import func
+from sqlalchemy.orm import Session
 
 router = APIRouter(prefix="/monitoring", tags=["monitoring"])
 

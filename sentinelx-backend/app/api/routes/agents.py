@@ -1,8 +1,5 @@
 from uuid import UUID
 
-from fastapi import APIRouter, Depends, HTTPException
-from sqlalchemy.orm import Session, joinedload
-
 from app.agents import DEFAULT_AGENTS
 from app.core.pagination import DEFAULT_PAGE_LIMIT, LimitQuery
 from app.core.security import verify_api_key
@@ -19,6 +16,8 @@ from app.schemas.signal_detail import SignalDetailResponse
 from app.services.agent_processing_service import AgentProcessingService
 from app.services.signal_detail_service import SignalDetailService
 from app.workers.ai_worker import process_parsed_record_task
+from fastapi import APIRouter, Depends, HTTPException
+from sqlalchemy.orm import Session, joinedload
 
 router = APIRouter(prefix="/agents", tags=["agents"])
 

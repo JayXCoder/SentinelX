@@ -3,7 +3,7 @@ import uuid
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 
-from app.core.pagination import DEFAULT_PAGE_LIMIT, LimitQuery, SkipQuery
+from app.core.pagination import LimitQuery, SkipQuery
 from app.core.security import verify_api_key
 from app.db.models.rag_memory import RAGMemory
 from app.db.session import get_db

@@ -1,11 +1,12 @@
 from contextlib import asynccontextmanager
 
 from fastapi import FastAPI
+
 from app.api.routes import analytics, correlation, health, knowledge_graph, rag, risk_scores
 from app.core.config import get_settings
 from app.core.cors import configure_cors
-from app.core.middleware import ObservabilityMiddleware
 from app.core.logging import get_logger, setup_logging
+from app.core.middleware import ObservabilityMiddleware
 from app.db.base import Base
 from app.db.session import engine
 from app.services.qdrant_service import QdrantService

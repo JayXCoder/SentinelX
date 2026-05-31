@@ -1,7 +1,6 @@
-from fastapi.testclient import TestClient
-
 from app.core.config import get_settings
 from app.main import app
+from fastapi.testclient import TestClient
 
 
 def test_rag_ask_requires_api_key_when_configured(monkeypatch):

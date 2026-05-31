@@ -5,6 +5,10 @@ target-version = "py312"
 [tool.ruff.lint]
 select = ["E", "F", "I", "UP", "B"]
 
+# FastAPI dependency injection uses Depends() in route signatures by design.
+[tool.ruff.lint.per-file-ignores]
+"**/app/api/**/*.py" = ["B008"]
+
 [tool.pytest.ini_options]
 testpaths = ["tests"]
 pythonpath = ["."]

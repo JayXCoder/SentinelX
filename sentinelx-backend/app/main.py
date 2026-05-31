@@ -3,11 +3,21 @@ from contextlib import asynccontextmanager
 
 from fastapi import FastAPI
 
-from app.api.routes import agents, health, monitoring, notes, records, scrape_jobs, sources, workspace, ws
+from app.api.routes import (
+    agents,
+    health,
+    monitoring,
+    notes,
+    records,
+    scrape_jobs,
+    sources,
+    workspace,
+    ws,
+)
 from app.core.config import get_settings
 from app.core.cors import configure_cors
-from app.core.middleware import ObservabilityMiddleware
 from app.core.logging import setup_logging
+from app.core.middleware import ObservabilityMiddleware
 from app.db.base import Base
 from app.db.session import engine
 from app.services.embedding_service import EmbeddingService

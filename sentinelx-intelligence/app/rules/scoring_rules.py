@@ -1,4 +1,4 @@
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from typing import Any
 
 from app.core.scoring_config import (
@@ -13,9 +13,9 @@ from app.core.scoring_config import (
 def _recency_weight(signal_timestamp: datetime | None) -> float:
     if signal_timestamp is None:
         return RECENCY_WEIGHTS["stale"]
-    now = datetime.now(timezone.utc)
+    now = datetime.now(UTC)
     if signal_timestamp.tzinfo is None:
-        signal_timestamp = signal_timestamp.replace(tzinfo=timezone.utc)
+        signal_timestamp = signal_timestamp.replace(tzinfo=UTC)
     age_hours = (now - signal_timestamp).total_seconds() / 3600
     if age_hours <= RECENCY_DECAY_HOURS["fresh"]:
         return RECENCY_WEIGHTS["fresh"]
@@ -96,7 +96,8 @@ def build_explanation(
     score_type: str,
     signals: list[dict[str, Any]],
 ) -> str:
-    template = EXPLANATION_TEMPLATES.get(score_type, "Score: {score:.0f} ({level}), {count} signals.")
+    default_template = "Score: {score:.0f} ({level}), {count} signals."
+    template = EXPLANATION_TEMPLATES.get(score_type, default_template)
     count = len(signals)
     avg_severity = sum(float(s.get("severity", 0)) for s in signals) / max(count, 1)
     avg_confidence = sum(float(s.get("confidence", 0)) for s in signals) / max(count, 1)

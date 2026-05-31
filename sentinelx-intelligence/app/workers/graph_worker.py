@@ -5,7 +5,6 @@ from app.db.models.correlated_event import CorrelatedEvent
 from app.db.models.intelligence_signal import IntelSignal
 from app.db.session import SessionLocal
 from app.services.knowledge_graph_service import KnowledgeGraphService
-from app.services.qdrant_service import QdrantService
 from app.services.rag_service import RAGService
 from app.services.redis_stream_service import RedisStreamService
 from app.workers.celery_app import celery_app
@@ -66,7 +65,7 @@ def update_knowledge_graph_task(
                     )
                     relationships_created += 1
 
-            mem = rag_svc.store_memory(
+            rag_svc.store_memory(
                 db=db,
                 text_chunk=f"{sig.title}\n\n{sig.summary}",
                 memory_type="signal_summary",
@@ -91,7 +90,10 @@ def update_knowledge_graph_task(
             if event:
                 rag_svc.store_memory(
                     db=db,
-                    text_chunk=f"{event.title}\n\n{event.summary}\n\nCorrelation: {event.correlation_reason}",
+                    text_chunk=(
+                        f"{event.title}\n\n{event.summary}\n\n"
+                        f"Correlation: {event.correlation_reason}"
+                    ),
                     memory_type="correlated_event",
                     collection="correlated_events_memory",
                     metadata={
@@ -137,6 +139,6 @@ def update_knowledge_graph_task(
     except Exception as exc:
         db.rollback()
         logger.error("Graph worker failed", extra={"error": str(exc)})
-        raise self.retry(exc=exc, countdown=45)
+        raise self.retry(exc=exc, countdown=45) from exc
     finally:
         db.close()

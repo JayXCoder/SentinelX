@@ -58,6 +58,6 @@ def calculate_risk_score_task(self, event_id: str) -> dict:
     except Exception as exc:
         db.rollback()
         logger.error("Risk scoring task failed", extra={"event_id": event_id, "error": str(exc)})
-        raise self.retry(exc=exc, countdown=30)
+        raise self.retry(exc=exc, countdown=30) from exc
     finally:
         db.close()

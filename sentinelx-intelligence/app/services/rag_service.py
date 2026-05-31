@@ -96,7 +96,12 @@ class RAGService:
 
         # Search across all relevant collections
         context_chunks: list[str] = []
-        for collection in ["signals_memory", "correlated_events_memory", "risk_explanations_memory"]:
+        memory_collections = (
+            "signals_memory",
+            "correlated_events_memory",
+            "risk_explanations_memory",
+        )
+        for collection in memory_collections:
             results = self._qdrant.search(
                 collection,
                 question,
@@ -182,5 +187,8 @@ class RAGService:
                 )
                 reindexed += 1
             except Exception as exc:
-                logger.error("Reindex failed for memory", extra={"id": str(mem.id), "error": str(exc)})
+                logger.error(
+                    "Reindex failed for memory",
+                    extra={"id": str(mem.id), "error": str(exc)},
+                )
         return reindexed

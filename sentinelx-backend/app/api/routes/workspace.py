@@ -1,10 +1,9 @@
-from fastapi import APIRouter, Depends
-from sqlalchemy.orm import Session
-
 from app.core.security import verify_api_key
 from app.db.session import get_db
 from app.schemas.workspace import WorkspaceProfileRead, WorkspaceProfileUpdate
 from app.services.workspace_service import WorkspaceService
+from fastapi import APIRouter, Depends
+from sqlalchemy.orm import Session
 
 router = APIRouter(prefix="/workspace", tags=["workspace"])
 
