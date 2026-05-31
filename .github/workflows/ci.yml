@@ -54,7 +54,7 @@ jobs:
         working-directory: sentinelx-backend
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
 
       - uses: actions/setup-python@v5
         with:
@@ -81,7 +81,7 @@ jobs:
         working-directory: sentinelx-frontend
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
 
       - uses: actions/setup-node@v4
         with:
@@ -108,7 +108,7 @@ jobs:
   backend-docker:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
 
       - name: Build backend image
         run: docker build -t sentinelx-backend:ci ./sentinelx-backend
@@ -116,7 +116,7 @@ jobs:
   frontend-docker:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
 
       - name: Build frontend image
         run: |
@@ -130,7 +130,7 @@ jobs:
   compose-config:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
 
       - name: Validate default stack compose file
         run: docker compose config --quiet
@@ -141,7 +141,7 @@ jobs:
   stack-docker-build:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
 
       - name: Build default stack images (api + frontend)
         run: |
@@ -182,7 +182,7 @@ jobs:
         working-directory: sentinelx-intelligence
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
 
       - uses: actions/setup-python@v5
         with:
@@ -205,7 +205,7 @@ jobs:
   compose-prod-config:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
 
       - name: Validate production compose overlay
         run: docker compose -f docker-compose.yml -f docker-compose.prod.yml config --quiet
